@@ -27,6 +27,7 @@ ModelKind detect_model_kind(const GgufFile& meta_shard);
 /// The Qwen35MoE geometry, taken from the artifact's metadata.  Every field is a number a kernel depends on.
 struct Qwen35Geometry {
     int64_t n_layers = 0;
+    int64_t n_mtp_layers = 0;         ///< nextn blocks following the target trunk
     int64_t n_embd = 0;               ///< residual width
     int64_t n_expert = 0;             ///< routed experts per layer
     int64_t n_expert_used = 0;        ///< routed experts selected per token
@@ -75,5 +76,9 @@ bool check_qwen35_tensors(const GgufModel& model, const Qwen35Geometry& g, std::
 /// `detect_model_kind` + `qwen35_geometry` + `check_qwen35_tensors`.  The entry point a loader calls before
 /// it allocates anything.
 bool check_qwen35_all(const GgufModel& model, Qwen35Geometry& g, std::string& err);
+
+/// Validate an external MTP-only artifact against the target's geometry, including its dense block.
+bool check_qwen35_mtp(const GgufModel& model, const Qwen35Geometry& target, Qwen35Geometry& draft,
+                     std::string& err);
 
 }  // namespace strata::core

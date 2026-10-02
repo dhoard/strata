@@ -15,8 +15,27 @@
 #include <mutex>
 #include <vector>
 
+// CPU vector primitives from the pinned GGML backend. Sharing quantization/activation primitives
+// matches its SIMD rounding; the independent oracle still builds and executes the upstream model graph.
+extern "C" {
+void ggml_vec_silu_f32(int n, float* y, const float* x);
+void ggml_vec_swiglu_f32(int n, float* y, const float* x, const float* up);
+double ggml_vec_soft_max_f32(int n, float* y, const float* x, float max);
+}
+
 namespace strata::qwen35 {
 namespace {
+void softmax(int n, float* values) {
+    const float max = *std::max_element(values,values+n);
+    const double sum = ggml_vec_soft_max_f32(n,values,values,max);
+    const float inv = (float) (1.0/sum);
+    for (int i=0;i<n;++i) values[i] *= inv;
+}
+float float_dot(int64_t n, const float* x, const float* y) {
+    float s = 0.0f;
+    ggml_get_type_traits_cpu(GGML_TYPE_F32)->vec_dot((int) n, &s, 0, x, 0, y, 0, 1);
+    return s;
+}
 
 void quant_matvec(int type, const void* w, int64_t n_in, int64_t n_out, const float* x, float* y) {
     static std::once_flag once;
@@ -29,16 +48,18 @@ void quant_matvec(int type, const void* w, int64_t n_in, int64_t n_out, const fl
     const ggml_type vdt = t->vec_dot_type;
     const auto* at = ggml_get_type_traits_cpu(vdt);
     static thread_local std::vector<uint8_t> scratch;
-    scratch.resize(ggml_row_size(vdt, n_in));
-    at->from_float(x, scratch.data(), n_in);
+    if (vdt != GGML_TYPE_F32) {
+        scratch.resize(ggml_row_size(vdt, n_in));
+        at->from_float(x, scratch.data(), n_in);
+    }
     const size_t rb = ggml_row_size((ggml_type) type, n_in);
     const int n = (int) n_in;
     // The activation buffer is a `thread_local` scratch: take the pointer HERE, on the thread that quantized it.
     // Reading `scratch.data()` inside the parallel region would resolve to each worker's own (empty) buffer.
-    const uint8_t* act = scratch.data();
+    const void* act = vdt == GGML_TYPE_F32 ? (const void*) x : scratch.data();
     // The rows are independent and the weight/activation are read-only, so this is the one place the Qwen35
     // path gets its threads.  A token issues ~1000 of these; the per-call barrier is negligible beside the rows.
-#pragma omp parallel for schedule(static)
+#pragma omp parallel for schedule(static) if(n_out >= 256)
     for (int64_t o = 0; o < n_out; ++o) {
         float s = 0.0f;
         t->vec_dot(n, &s, 0, (const char*) w + (size_t) o * rb, 0, act, 0, 1);
@@ -73,6 +94,10 @@ void qwen35_enable_ggml() {
         ctx = ggml_init(p);
     }
     g_quant_matvec = quant_matvec;
+    g_float_dot = float_dot;
+    g_silu_vec = ggml_vec_silu_f32;
+    g_swiglu_vec = ggml_vec_swiglu_f32;
+    g_softmax_vec = softmax;
     g_row_dequant = row_dequant;
 }
 

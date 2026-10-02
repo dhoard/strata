@@ -100,6 +100,10 @@ int gpu_batch(const Mat* const* mats, const float* const* xs, float* const* ys, 
         cap_out = total;
     }
     int64_t off = 0;
+    // Host addresses only identify an activation within this batch. The caller reuses its scratch
+    // between layers/tokens, so caching the address across calls silently reuses stale Q8_1 values.
+    g_last_x = nullptr;
+    g_last_n = 0;
     for (int i = 0; i < count; ++i) {
         const void* wdev = mats[i]->dev;
         if (!wdev) {

@@ -48,6 +48,44 @@ Mat make_expert(const strata::GgufModel& m, const std::string& name, int64_t exp
 
 }  // namespace
 
+bool load_mtp(const std::string& path, const Qwen35Geometry& target, MtpWeights& w, std::string& err) {
+    try {
+        err.clear();
+        auto holder = std::make_shared<strata::GgufModel>(std::vector<std::string>{path});
+        const auto& model = *holder;
+        Qwen35Geometry g;
+        if (!core::check_qwen35_mtp(model,target,g,err)) return false;
+        const std::string p = "blk."+std::to_string(g.n_layers)+".";
+        const auto f32 = [&](const std::string& name) {
+            size_t sh = 0; const auto* t = model.find(name,&sh);
+            return t ? (const float*) model.shard(sh).tensor_data(*t) : nullptr;
+        };
+        const auto mat = [&](const char* suffix) { return make_mat(model,p+suffix,err); };
+        const auto select = [&](const char* own, const char* fallback) {
+            return model.find(p+own) ? p+own : std::string(fallback);
+        };
+        w.embedding = make_mat(model,select("nextn.embed_tokens.weight","token_embd.weight"),err);
+        w.output = make_mat(model,select("nextn.shared_head_head.weight",g.output_tied ? "token_embd.weight" : "output.weight"),err);
+        w.head_norm = f32(select("nextn.shared_head_norm.weight","output_norm.weight"));
+        w.eh_proj = mat("nextn.eh_proj.weight");
+        w.enorm = f32(p+"nextn.enorm.weight"); w.hnorm = f32(p+"nextn.hnorm.weight");
+        w.post_norm = f32(p+"post_attention_norm.weight");
+        w.attn = {f32(p+"attn_norm.weight"),mat("attn_q.weight"),mat("attn_k.weight"),
+                  mat("attn_v.weight"),mat("attn_output.weight"),f32(p+"attn_q_norm.weight"),f32(p+"attn_k_norm.weight")};
+        w.moe.gate_inp = f32(p+"ffn_gate_inp.weight");
+        w.moe.gate_inp_shexp = f32(p+"ffn_gate_inp_shexp.weight");
+        w.moe.gate_shexp = mat("ffn_gate_shexp.weight");
+        w.moe.up_shexp = mat("ffn_up_shexp.weight"); w.moe.down_shexp = mat("ffn_down_shexp.weight");
+        w.experts.resize((size_t) g.n_expert);
+        for (int64_t e=0;e<g.n_expert;++e)
+            w.experts[(size_t) e] = {make_expert(model,p+"ffn_gate_exps.weight",e,err),
+                                     make_expert(model,p+"ffn_up_exps.weight",e,err),
+                                     make_expert(model,p+"ffn_down_exps.weight",e,err)};
+        w.moe.experts = w.experts.data(); w.backing = holder;
+        return err.empty();
+    } catch (const std::exception& e) { err = "loading Qwen35 MTP "+path+": "+e.what(); return false; }
+}
+
 bool load_trunk(const std::string& path, Qwen35Geometry& g, TrunkWeights& w, std::string& err) {
     try {
         // The Mats point INTO this model's mmap, so it must outlive them: keep it in `w.backing`.
@@ -60,7 +98,7 @@ bool load_trunk(const std::string& path, Qwen35Geometry& g, TrunkWeights& w, std
             if (e->is_num()) w.eos_token = (int64_t) e->num();
 
         w.token_embd = make_mat(model, "token_embd.weight", err);
-        w.output = make_mat(model, "output.weight", err);
+        w.output = g.output_tied ? w.token_embd : make_mat(model, "output.weight", err);
         if (!err.empty()) return false;
         {
             const strata::TensorInfo* t = model.find("output_norm.weight");

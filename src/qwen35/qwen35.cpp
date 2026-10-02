@@ -10,18 +10,58 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <stdexcept>
 
 namespace strata::qwen35 {
 
 // The quantized hooks.  Null in the float-only library (the unit tests); installed by qwen35_enable_ggml().
 QuantMatvecFn g_quant_matvec = nullptr;
+FloatDotFn g_float_dot = nullptr;
+UnaryVecFn g_silu_vec = nullptr;
+SwigluVecFn g_swiglu_vec = nullptr;
+SoftmaxVecFn g_softmax_vec = nullptr;
 RowDequantFn g_row_dequant = nullptr;
 GpuMatvecFn g_gpu_matvec = nullptr;
 GpuBatchFn g_gpu_batch = nullptr;
+thread_local StageTraceFn g_stage_trace = nullptr;
+static thread_local int64_t trace_layer = -1;
+static void stage(const char* name, const float* values, int64_t n) {
+    if (g_stage_trace) g_stage_trace(trace_layer, name, values, n);
+}
+static void stage_parts(const char* name, const std::vector<std::vector<float>>& parts) {
+    if (!g_stage_trace) return;
+    std::vector<float> flat;
+    for (const auto& p : parts) flat.insert(flat.end(),p.begin(),p.end());
+    stage(name,flat.data(),(int64_t) flat.size());
+}
+
+TrunkSnapshot TrunkState::snapshot() const {
+    TrunkSnapshot s;
+    s.owner = this; s.generation = generation; s.position = position;
+    s.tail_revision = position ? revisions[(size_t) position-1] : 0;
+    s.gdn = gdn;
+    for (const auto& a : attn) s.attention_n.push_back(a.n);
+    return s;
+}
+
+bool TrunkState::restore(const TrunkSnapshot& s, std::string& err) {
+    if (s.owner != this || s.generation != generation || s.position < 0 || s.position > position ||
+        s.gdn.size() != gdn.size() || s.attention_n.size() != attn.size() ||
+        (s.position && revisions[(size_t) s.position-1] != s.tail_revision)) {
+        err = "qwen35: snapshot is from another session, reset or overwritten prefix";
+        return false;
+    }
+    gdn = s.gdn;
+    for (size_t i=0;i<attn.size();++i) attn[i].n = s.attention_n[i];
+    position = s.position;
+    revisions.resize((size_t) position);
+    return true;
+}
 
 Mat mat_row(const Mat& m, int64_t i) {
     Mat r = m;
     r.data = (const uint8_t*) m.data + (size_t) i * m.row_bytes;
+    if (m.dev) r.dev = (const uint8_t*) m.dev + (size_t) i * m.row_bytes;
     r.n_out = 1;
     return r;
 }
@@ -43,6 +83,7 @@ void matvec(const Mat& m, const float* x, float* y) {
     if (m.n_out <= 0) return;
     if (m.dev && g_gpu_matvec && g_gpu_matvec(m, x, y)) return;
     if (m.type == 0) {
+        if (g_quant_matvec) { g_quant_matvec(0, m.data, m.n_in, m.n_out, x, y); return; }
         for (int64_t o = 0; o < m.n_out; ++o) {
             const float* row = (const float*) m.data + o * m.n_in;
             double s = 0.0;
@@ -89,16 +130,17 @@ void dequant_row(const Mat& m, int64_t row, float* out) {
 
 void rms_norm(const float* x, const float* w, int64_t n, float eps, float* y) {
     double ss = 0.0;
-    for (int64_t i = 0; i < n; ++i) ss += (double) x[i] * x[i];
+    // GGML accumulates float-rounded squares in double precision.
+    for (int64_t i = 0; i < n; ++i) ss += (double) (x[i] * x[i]);
     const float r = 1.0f / std::sqrt((float) (ss / (double) n) + eps);
     for (int64_t i = 0; i < n; ++i) y[i] = x[i] * r * (w ? w[i] : 1.0f);
 }
 
 void l2_norm(const float* x, int64_t n, float eps, float* y) {
-    double ss = 0.0;
-    for (int64_t i = 0; i < n; ++i) ss += (double) x[i] * x[i];
-    const float r = 1.0f / std::sqrt((float) ss + eps);
-    for (int64_t i = 0; i < n; ++i) y[i] = x[i] * r;
+    // Match upstream's build_gdn_l2_norm: RMS(eps/n) then scale by 1/sqrt(n).
+    rms_norm(x, nullptr, n, eps / (float) n, y);
+    const float r = 1.0f / std::sqrt((float) n);
+    for (int64_t i = 0; i < n; ++i) y[i] *= r;
 }
 
 void gdn_layer(const Qwen35Geometry& g, const GdnLayerWeights& w, GdnState& st, const float* x, float* out) {
@@ -115,6 +157,7 @@ void gdn_layer(const Qwen35Geometry& g, const GdnLayerWeights& w, GdnState& st, 
 
     std::vector<float> xn((size_t) H);
     rms_norm(x, w.attn_norm, H, eps, xn.data());
+    stage("attn_norm", xn.data(), H);
 
     std::vector<float> qkv((size_t) qkv_dim), z((size_t) value_dim);
     std::vector<float> beta((size_t) Hv), alpha((size_t) Hv), gate((size_t) Hv);
@@ -128,24 +171,33 @@ void gdn_layer(const Qwen35Geometry& g, const GdnLayerWeights& w, GdnState& st, 
     if (!batched) {
         matvec(w.wqkv, xn.data(), qkv.data());
         matvec(w.wgate, xn.data(), z.data());
-        for (int64_t h = 0; h < Hv; ++h) {
-            beta[(size_t) h] = mat_dot(mat_row(w.ssm_beta, h), xn.data());
-            alpha[(size_t) h] = mat_dot(mat_row(w.ssm_alpha, h), xn.data());
-        }
+        matvec(w.ssm_beta, xn.data(), beta.data());
+        matvec(w.ssm_alpha, xn.data(), alpha.data());
     }
+    stage("linear_attn_qkv_mixed", qkv.data(), qkv_dim);
+    stage("z", z.data(), value_dim);
     for (int64_t h = 0; h < Hv; ++h) {
         beta[(size_t) h] = sigmoid(beta[(size_t) h]);
         alpha[(size_t) h] += w.ssm_dt[h];
-        gate[(size_t) h] = softplus(alpha[(size_t) h]) * w.ssm_a[h];
+        alpha[(size_t) h] = softplus(alpha[(size_t) h]);
+        gate[(size_t) h] = alpha[(size_t) h] * w.ssm_a[h];
     }
+    stage("beta_sigmoid", beta.data(), Hv);
+    stage("a_softplus", alpha.data(), Hv);
+    stage("gate", gate.data(), Hv);
 
     std::vector<float> h((size_t) C);
     for (int64_t c = 0; c < C; ++c) {
         const float* taps = w.ssm_conv + c * d_conv;
-        double s = (double) qkv[(size_t) c] * taps[d_conv - 1];
-        for (int64_t j = 0; j < d_conv - 1; ++j) s += (double) st.conv[(size_t) (j * C + c)] * taps[j];
-        h[(size_t) c] = silu((float) s);
+        float s = 0.0f;
+        // GGML's native CPU convolution uses fused multiply-add at each tap.
+        for (int64_t j = 0; j < d_conv - 1; ++j) s = std::fma(st.conv[(size_t) (j * C + c)], taps[j], s);
+        s = std::fma(qkv[(size_t) c], taps[d_conv - 1], s);
+        h[(size_t) c] = s;
     }
+    stage("conv_output_raw", h.data(), C);
+    if (g_silu_vec) g_silu_vec((int) C,h.data(),h.data());
+    else for (float& v : h) v = silu(v);
     for (int64_t j = 0; j + 1 < d_conv - 1; ++j)
         std::memcpy(&st.conv[(size_t) (j * C)], &st.conv[(size_t) ((j + 1) * C)], (size_t) C * sizeof(float));
     if (d_conv >= 2)
@@ -161,6 +213,7 @@ void gdn_layer(const Qwen35Geometry& g, const GdnLayerWeights& w, GdnState& st, 
     }
 
     const float scale = 1.0f / std::sqrt((float) S);
+    stage("state_predelta", st.rec.data(), (int64_t) st.rec.size());
     std::vector<float> o((size_t) value_dim), delta((size_t) S);
     for (int64_t hv = 0; hv < Hv; ++hv) {
         const int64_t hk = hv % Hk;
@@ -173,32 +226,39 @@ void gdn_layer(const Qwen35Geometry& g, const GdnLayerWeights& w, GdnState& st, 
             float* row = M + j * S;
             for (int64_t i = 0; i < S; ++i) row[i] *= decay;
             double sk = 0.0;
-            for (int64_t i = 0; i < S; ++i) sk += (double) row[i] * kd[i];
+            if (g_float_dot) sk = g_float_dot(S, row, kd);
+            else for (int64_t i = 0; i < S; ++i) sk += (double) row[i] * kd[i];
             delta[(size_t) j] = (vd[j] - (float) sk) * beta[(size_t) hv];
-            for (int64_t i = 0; i < S; ++i) row[i] += kd[i] * delta[(size_t) j];
+            for (int64_t i = 0; i < S; ++i)
+                row[i] = std::fma(kd[i], delta[(size_t) j], row[i]);
             double oo = 0.0;
-            for (int64_t i = 0; i < S; ++i) oo += (double) row[i] * qd[i];
+            if (g_float_dot) oo = g_float_dot(S, row, qd);
+            else for (int64_t i = 0; i < S; ++i) oo += (double) row[i] * qd[i];
             o[(size_t) (hv * S + j)] = (float) oo * scale;
         }
     }
+    stage("new_state", st.rec.data(), (int64_t) st.rec.size());
+    stage("attn_output", o.data(), value_dim);
 
     std::vector<float> y((size_t) value_dim), tmp((size_t) S);
+    if (g_silu_vec) g_silu_vec((int) value_dim,z.data(),z.data());
+    else for (float& v : z) v = silu(v);
     for (int64_t hv = 0; hv < Hv; ++hv) {
         rms_norm(o.data() + hv * S, w.ssm_norm, S, eps, tmp.data());
-        for (int64_t j = 0; j < S; ++j) y[(size_t) (hv * S + j)] = tmp[(size_t) j] * silu(z[(size_t) (hv * S + j)]);
+        for (int64_t j = 0; j < S; ++j) y[(size_t) (hv * S + j)] = tmp[(size_t) j] * z[(size_t) (hv * S + j)];
     }
     matvec(w.ssm_out, y.data(), out);
 }
 
 void rope_neox(float* v, int64_t head_dim, int64_t n_rot, float base, int64_t pos) {
     const int64_t half = n_rot / 2;
-    const double theta_scale = std::pow((double) base, -2.0 / (double) n_rot);
-    double theta = (double) pos;
+    const float theta_scale = std::pow(base, -2.0f / (float) n_rot);
+    float theta = (float) pos;
     for (int64_t k = 0; k < half; ++k) {
-        const float c = (float) std::cos(theta), s = (float) std::sin(theta);
+        const float c = std::cos(theta), s = std::sin(theta);
         const float x0 = v[k], x1 = v[k + half];
-        v[k] = x0 * c - x1 * s;
-        v[k + half] = x0 * s + x1 * c;
+        v[k] = std::fma(x0,c,-x1*s);
+        v[k + half] = std::fma(x0,s,x1*c);
         theta *= theta_scale;
     }
     (void) head_dim;
@@ -221,6 +281,7 @@ void attn_layer(const Qwen35Geometry& g, const AttnLayerWeights& w, AttnState& s
 
     std::vector<float> xn((size_t) H);
     rms_norm(x, w.attn_norm, H, eps, xn.data());
+    stage("attn_norm", xn.data(), H);
 
     std::vector<float> qfull((size_t) 2 * Nh * D), kf((size_t) kv), vf((size_t) kv);
     bool batched = false;
@@ -246,39 +307,61 @@ void attn_layer(const Qwen35Geometry& g, const AttnLayerWeights& w, AttnState& s
         rms_norm(kh, w.k_norm, D, eps, kh);
         rope_neox(kh, D, g.rope_dim, (float) g.rope_freq_base, pos);
     }
+    if (g_stage_trace) {
+        std::vector<float> qp((size_t) Nh*D);
+        for (int64_t h=0;h<Nh;++h) std::copy_n(qfull.data()+h*2*D,D,qp.data()+h*D);
+        stage("Qcur",qp.data(),Nh*D);
+        stage("Kcur",kf.data(),kv);
+    }
 
     std::memcpy(&st.k[(size_t) pos * kv], kf.data(), (size_t) kv * sizeof(float));
     std::memcpy(&st.v[(size_t) pos * kv], vf.data(), (size_t) kv * sizeof(float));
     st.n += 1;
 
     std::vector<float> attn((size_t) D), o((size_t) Nh * D);
-    std::vector<float> scores((size_t) (pos + 1));
+    // The CPU reference keeps K/V cells padded in blocks of 256. Match its vector reduction order
+    // when GGML primitives are installed, so masked zeros do not change quantization downstream.
+    const int64_t score_cells = g_float_dot ? std::max<int64_t>(256, ((pos+256)/256)*256) : pos+1;
+    std::vector<float> scores((size_t) score_cells), column((size_t) score_cells);
     for (int64_t h = 0; h < Nh; ++h) {
         const int64_t hkv = h / ratio;
         const float* q = qfull.data() + h * 2 * D;
         const float* gate = q + D;
         float mx = -INFINITY;
+        std::fill(scores.begin(),scores.end(),-INFINITY);
         for (int64_t j = 0; j <= pos; ++j) {
             double s = 0.0;
-            for (int64_t d = 0; d < D; ++d) s += (double) q[d] * st.k[(size_t) j * kv + hkv * D + d];
+            if (g_float_dot) s = g_float_dot(D,q,st.k.data()+(size_t) j*kv+hkv*D);
+            else for (int64_t d = 0; d < D; ++d) s += (double) q[d] * st.k[(size_t) j * kv + hkv * D + d];
             scores[(size_t) j] = (float) s * scale;
             mx = std::max(mx, scores[(size_t) j]);
         }
-        double sum = 0.0;
-        for (int64_t j = 0; j <= pos; ++j) { scores[(size_t) j] = std::exp(scores[(size_t) j] - mx); sum += scores[(size_t) j]; }
-        const float inv = (float) (1.0 / sum);
-        for (int64_t d = 0; d < D; ++d) attn[(size_t) d] = 0.0f;
-        for (int64_t j = 0; j <= pos; ++j) {
-            const float p = scores[(size_t) j] * inv;
-            for (int64_t d = 0; d < D; ++d) attn[(size_t) d] += p * st.v[(size_t) j * kv + hkv * D + d];
+        if (g_softmax_vec && g_float_dot) {
+            g_softmax_vec((int) score_cells,scores.data());
+            for (int64_t d = 0; d < D; ++d) {
+                for (int64_t j = 0; j < score_cells; ++j)
+                    column[(size_t) j] = j <= pos ? st.v[(size_t) j*kv+hkv*D+d] : 0.0f;
+                attn[(size_t) d] = g_float_dot(score_cells,column.data(),scores.data());
+            }
+        } else {
+            double sum = 0.0;
+            for (int64_t j = 0; j <= pos; ++j) { scores[(size_t) j] = std::exp(scores[(size_t) j] - mx); sum += scores[(size_t) j]; }
+            const float inv = (float) (1.0 / sum);
+            for (int64_t d = 0; d < D; ++d) attn[(size_t) d] = 0.0f;
+            for (int64_t j = 0; j <= pos; ++j) {
+                const float p = scores[(size_t) j] * inv;
+                for (int64_t d = 0; d < D; ++d) attn[(size_t) d] += p * st.v[(size_t) j * kv + hkv * D + d];
+            }
         }
         for (int64_t d = 0; d < D; ++d) o[(size_t) (h * D + d)] = attn[(size_t) d] * sigmoid(gate[d]);
     }
     matvec(w.wo, o.data(), out);
+    stage("attn_output",out,H);
 }
 
 namespace {
 void softmax_inplace(std::vector<float>& p) {
+    if (g_softmax_vec) { g_softmax_vec((int) p.size(),p.data()); return; }
     float mx = -INFINITY;
     for (float v : p) mx = std::max(mx, v);
     double s = 0.0;
@@ -295,20 +378,28 @@ void moe_layer(const Qwen35Geometry& g, const MoeLayerWeights& w, const float* x
     for (int64_t e = 0; e < E; ++e) {
         const float* row = w.gate_inp + e * H;
         double s = 0.0;
-        for (int64_t i = 0; i < H; ++i) s += (double) row[i] * x[i];
+        if (g_float_dot) s = g_float_dot(H,row,x);
+        else for (int64_t i = 0; i < H; ++i) s += (double) row[i] * x[i];
         logits[(size_t) e] = (float) s;
     }
     std::vector<float> probs = logits;
+    stage("ffn_moe_logits", logits.data(), E);
     softmax_inplace(probs);
+    stage("ffn_moe_probs",probs.data(),E);
 
-    std::vector<int64_t> idx((size_t) E);
+    std::vector<int32_t> idx((size_t) E);
     for (int64_t e = 0; e < E; ++e) idx[(size_t) e] = e;
-    std::partial_sort(idx.begin(), idx.begin() + (size_t) K, idx.end(),
-                      [&](int64_t a, int64_t b) { return probs[(size_t) a] > probs[(size_t) b]; });
+    // Qwen35's upstream graph uses ARGSORT + a top-K view, not the TOP_K operator.
+    // Match its complete int32 sort, including equal-score ordering: accumulation order can
+    // change the next layer's activation quantization at a rounding boundary.
+    std::sort(idx.begin(), idx.end(),
+              [&](int32_t a, int32_t b) { return probs[(size_t) a] > probs[(size_t) b]; });
     std::vector<float> wts((size_t) K);
     double wsum = 0.0;
     for (int64_t i = 0; i < K; ++i) { wts[(size_t) i] = probs[(size_t) idx[(size_t) i]]; wsum += wts[(size_t) i]; }
-    for (int64_t i = 0; i < K; ++i) wts[(size_t) i] = (float) (wts[(size_t) i] / wsum);
+    const float wsum_f32 = std::max((float) wsum, 6.103515625e-5f);
+    for (int64_t i = 0; i < K; ++i) wts[(size_t) i] /= wsum_f32;
+    stage("ffn_moe_weights_norm",wts.data(),K);
 
     std::vector<float> acc((size_t) H, 0.0f);
     std::vector<std::vector<float>> gg((size_t) K, std::vector<float>((size_t) F));
@@ -338,8 +429,13 @@ void moe_layer(const Qwen35Geometry& g, const MoeLayerWeights& w, const float* x
             }
         }
     }
-    for (int64_t i = 0; i < K; ++i)
-        for (int64_t f = 0; f < F; ++f) hh[(size_t) i][(size_t) f] = silu(gg[(size_t) i][(size_t) f]) * uu[(size_t) i][(size_t) f];
+    stage_parts("ffn_moe_gate",gg);
+    stage_parts("ffn_moe_up",uu);
+    for (int64_t i = 0; i < K; ++i) {
+        if (g_swiglu_vec) g_swiglu_vec((int) F,hh[(size_t) i].data(),gg[(size_t) i].data(),uu[(size_t) i].data());
+        else for (int64_t f = 0; f < F; ++f) hh[(size_t) i][(size_t) f] = silu(gg[(size_t) i][(size_t) f]) * uu[(size_t) i][(size_t) f];
+    }
+    stage_parts("ffn_moe_swiglu",hh);
     {
         bool ok = false;
         if (g_gpu_batch) {
@@ -353,8 +449,10 @@ void moe_layer(const Qwen35Geometry& g, const MoeLayerWeights& w, const float* x
         }
         if (!ok) for (int64_t i = 0; i < K; ++i) matvec(expert(i).down, hh[(size_t) i].data(), yy[(size_t) i].data());
     }
+    stage_parts("ffn_moe_down",yy);
     for (int64_t i = 0; i < K; ++i)
         for (int64_t d = 0; d < H; ++d) acc[(size_t) d] += wts[(size_t) i] * yy[(size_t) i][(size_t) d];
+    stage("ffn_moe_out", acc.data(), H);
 
     std::vector<float> sg((size_t) Fs), su((size_t) Fs), sh((size_t) Fs), sy((size_t) H);
     bool sh_batched = false;
@@ -368,31 +466,72 @@ void moe_layer(const Qwen35Geometry& g, const MoeLayerWeights& w, const float* x
         matvec(w.gate_shexp, x, sg.data());
         matvec(w.up_shexp, x, su.data());
     }
-    for (int64_t f = 0; f < Fs; ++f) sh[(size_t) f] = silu(sg[(size_t) f]) * su[(size_t) f];
+    if (g_swiglu_vec) g_swiglu_vec((int) Fs,sh.data(),sg.data(),su.data());
+    else for (int64_t f = 0; f < Fs; ++f) sh[(size_t) f] = silu(sg[(size_t) f]) * su[(size_t) f];
     matvec(w.down_shexp, sh.data(), sy.data());
     double gs = 0.0;
-    for (int64_t i = 0; i < H; ++i) gs += (double) w.gate_inp_shexp[i] * x[i];
+    if (g_float_dot) gs = g_float_dot(H,w.gate_inp_shexp,x);
+    else for (int64_t i = 0; i < H; ++i) gs += (double) w.gate_inp_shexp[i] * x[i];
     const float sgate = sigmoid((float) gs);
     for (int64_t d = 0; d < H; ++d) out[d] = acc[(size_t) d] + sy[(size_t) d] * sgate;
+    stage("ffn_out", out, H);
 }
 
-void trunk_forward(const Qwen35Geometry& g, const TrunkWeights& w, TrunkState& st, int64_t token, float* logits) {
+void trunk_forward(const Qwen35Geometry& g, const TrunkWeights& w, TrunkState& st, int64_t token,
+                   float* logits, TrunkTraceFn trace, void* user, float* hidden) {
+    if (token < 0 || token >= g.n_vocab) throw std::out_of_range("qwen35: token outside vocabulary");
     const int64_t H = g.n_embd;
     std::vector<float> x((size_t) H), xn((size_t) H), a((size_t) H), m((size_t) H);
     dequant_row(w.token_embd, token, x.data());
     for (int64_t l = 0; l < g.n_layers; ++l) {
-        const float* an = w.attn_norm[(size_t) l];
+        trace_layer = l;
         const float* pn = w.post_attn_norm[(size_t) l];
-        rms_norm(x.data(), an, H, g.rms_eps, xn.data());
-        if (g.is_recurrent(l)) gdn_layer(g, w.gdn[(size_t) l], st.gdn[(size_t) l], xn.data(), a.data());
-        else attn_layer(g, w.attn[(size_t) l], st.attn[(size_t) l], xn.data(), a.data());
+        // Layer entry points own the attention norm. Passing a normalized activation here applies the
+        // learned norm twice, unlike upstream's single build_norm before attention/GDN.
+        if (g.is_recurrent(l)) gdn_layer(g, w.gdn[(size_t) l], st.gdn[(size_t) l], x.data(), a.data());
+        else attn_layer(g, w.attn[(size_t) l], st.attn[(size_t) l], x.data(), a.data());
         for (int64_t i = 0; i < H; ++i) x[(size_t) i] += a[(size_t) i];
+        stage("attn_residual", x.data(), H);
         rms_norm(x.data(), pn, H, g.rms_eps, xn.data());
+        stage("attn_post_norm", xn.data(), H);
         moe_layer(g, w.moe[(size_t) l], xn.data(), m.data());
         for (int64_t i = 0; i < H; ++i) x[(size_t) i] += m[(size_t) i];
+        if (trace) trace(l, x.data(), H, user);
     }
     rms_norm(x.data(), w.output_norm, H, g.rms_eps, xn.data());
+    if (hidden) std::copy_n(xn.data(),H,hidden);
     matvec(w.output, xn.data(), logits);
+    ++st.position;
+    st.revisions.push_back(++st.next_revision);
+}
+
+void mtp_forward(const Qwen35Geometry& g, const MtpWeights& w, AttnState& st, int64_t token,
+                 const float* hidden, float* logits, float* next_hidden) {
+    if (token < 0 || token >= g.n_vocab) throw std::out_of_range("qwen35 MTP: token outside vocabulary");
+    trace_layer = g.n_layers;
+    const int64_t H = g.n_embd;
+    std::vector<float> e((size_t) H), concat((size_t) 2*H), x((size_t) H), a((size_t) H), xn((size_t) H);
+    dequant_row(w.embedding,token,e.data());
+    stage("mtp_tok_embd",e.data(),H);
+    rms_norm(e.data(),w.enorm,H,g.rms_eps,concat.data());
+    rms_norm(hidden,w.hnorm,H,g.rms_eps,concat.data()+H);
+    stage("mtp_enorm",concat.data(),H);
+    stage("mtp_hnorm",concat.data()+H,H);
+    stage("mtp_concat",concat.data(),2*H);
+    matvec(w.eh_proj,concat.data(),x.data());
+    stage("mtp_eh_proj",x.data(),H);
+    attn_layer(g,w.attn,st,x.data(),a.data());
+    stage("mtp_attn_out",a.data(),H);
+    for (int64_t i=0;i<H;++i) x[(size_t) i] += a[(size_t) i];
+    stage("mtp_attn_residual",x.data(),H);
+    rms_norm(x.data(),w.post_norm,H,g.rms_eps,xn.data());
+    stage("mtp_attn_post_norm",xn.data(),H);
+    moe_layer(g,w.moe,xn.data(),a.data());
+    stage("mtp_ffn_out",a.data(),H);
+    for (int64_t i=0;i<H;++i) x[(size_t) i] += a[(size_t) i];
+    stage("mtp_post_ffn",x.data(),H);
+    rms_norm(x.data(),w.head_norm,H,g.rms_eps,next_hidden);
+    if (logits) matvec(w.output,next_hidden,logits);
 }
 
 }  // namespace strata::qwen35

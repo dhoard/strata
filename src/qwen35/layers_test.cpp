@@ -202,8 +202,25 @@ int main() {
             tw.moe[(size_t) l] = m;
         }
         q::TrunkState ts; ts.reset(g, 0);
+        // Assemble the block order independently of trunk_forward: each layer owns its attention
+        // norm. Non-unit learned norms above make accidental double normalization observable.
+        q::TrunkState expected_state; expected_state.reset(g, 0);
+        std::vector<float> residual((size_t) g.n_embd), mixed((size_t) g.n_embd), normed((size_t) g.n_embd);
+        q::dequant_row(tw.token_embd, 3, residual.data());
+        for (int64_t l = 0; l < g.n_layers; ++l) {
+            if (g.is_recurrent(l)) q::gdn_layer(g, tw.gdn[(size_t) l], expected_state.gdn[(size_t) l], residual.data(), mixed.data());
+            else q::attn_layer(g, tw.attn[(size_t) l], expected_state.attn[(size_t) l], residual.data(), mixed.data());
+            for (int64_t i = 0; i < g.n_embd; ++i) residual[(size_t) i] += mixed[(size_t) i];
+            q::rms_norm(residual.data(), tw.post_attn_norm[(size_t) l], g.n_embd, g.rms_eps, normed.data());
+            q::moe_layer(g, tw.moe[(size_t) l], normed.data(), mixed.data());
+            for (int64_t i = 0; i < g.n_embd; ++i) residual[(size_t) i] += mixed[(size_t) i];
+        }
+        q::rms_norm(residual.data(), tw.output_norm, g.n_embd, g.rms_eps, normed.data());
+        std::vector<float> expected((size_t) g.n_vocab);
+        q::matvec(tw.output, normed.data(), expected.data());
         std::vector<float> logits((size_t) g.n_vocab), logits2((size_t) g.n_vocab);
         q::trunk_forward(g, tw, ts, 3, logits.data());
+        check(logits == expected, "trunk applies each learned attention norm exactly once");
         q::trunk_forward(g, tw, ts, 5, logits2.data());
         bool finite = true;
         for (float v : logits) finite = finite && std::isfinite(v);
@@ -211,6 +228,53 @@ int main() {
         bool moved = false;
         for (int64_t i = 0; i < g.n_vocab; ++i) moved = moved || std::fabs(logits2[(size_t) i] - logits[(size_t) i]) > 1e-9f;
         check(moved, "trunk state advances between tokens");
+
+        // Force rejection after each accepted-prefix length. Restore, replay the accepted prefix,
+        // and compare the next logits and every recurrent cell with a direct non-speculative run.
+        for (int keep=0;keep<=4;++keep) {
+            q::TrunkState direct; direct.reset(g,16);
+            ts.zero(g);
+            q::trunk_forward(g,tw,ts,3,logits.data());
+            q::trunk_forward(g,tw,direct,3,expected.data());
+            const auto base = ts.snapshot();
+            for (int t=0;t<4;++t) q::trunk_forward(g,tw,ts,5+t,logits.data());
+            std::string err;
+            bool ok = ts.restore(base,err);
+            for (int t=0;t<keep;++t) {
+                q::trunk_forward(g,tw,ts,5+t,logits.data());
+                q::trunk_forward(g,tw,direct,5+t,expected.data());
+            }
+            q::trunk_forward(g,tw,ts,12,logits.data());
+            q::trunk_forward(g,tw,direct,12,expected.data());
+            ok = ok && logits == expected && ts.position == direct.position;
+            for (size_t l=0;l<ts.gdn.size();++l)
+                ok = ok && ts.gdn[l].conv == direct.gdn[l].conv && ts.gdn[l].rec == direct.gdn[l].rec && ts.attn[l].n == direct.attn[l].n;
+            check(ok,("rollback after accepting " + std::to_string(keep) + " draft tokens matches direct state/logits").c_str());
+        }
+        const auto before_reset = ts.snapshot();
+        ts.zero(g);
+        std::string err;
+        check(!ts.restore(before_reset,err),"reject snapshot across a conversation reset");
+        q::TrunkState other; other.reset(g,16);
+        check(!other.restore(ts.snapshot(),err),"reject snapshot from another session");
+        q::trunk_forward(g,tw,ts,3,logits.data());
+        const auto prefix = ts.snapshot();
+        q::trunk_forward(g,tw,ts,5,logits.data());
+        const auto abandoned = ts.snapshot();
+        bool ok = ts.restore(prefix,err);
+        q::trunk_forward(g,tw,ts,6,logits.data());
+        check(ok && !ts.restore(abandoned,err),"reject snapshot whose KV prefix was overwritten by another branch");
+    }
+
+    {
+        check(std::isfinite(q::softplus(1000.0f)) && q::softplus(1000.0f) == 1000.0f,
+              "GDN softplus stays finite for large positive alpha");
+        std::vector<float> host(32);
+        q::Mat m = fmat(host.data(), 8, 4);
+        m.dev = host.data(); // only check view offsets, without dereferencing as a device pointer
+        const auto row = q::mat_row(m, 2);
+        check(row.data == host.data()+16 && row.dev == host.data()+16 && row.n_out == 1,
+              "matrix row offsets both host and device blocks");
     }
 
     std::printf("qwen35 layers_test: %d failures\n", g_fail);

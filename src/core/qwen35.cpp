@@ -8,6 +8,9 @@
 #include "strata/core/qwen35.hpp"
 
 #include <cctype>
+#include <algorithm>
+#include <cmath>
+#include <limits>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -41,6 +44,10 @@ bool meta_i64(const GgufFile& g, const char* key, int64_t& out, std::string& err
     const MetaValue* v = g.get(key);
     if (!v) { err = std::string("qwen35moe: missing metadata ") + key; return false; }
     if (!v->is_num()) { err = std::string("qwen35moe: ") + key + " is not a number"; return false; }
+    if (!std::isfinite(v->num()) || v->num() != std::floor(v->num()) || v->num() < 0 ||
+        v->num() >= (double) std::numeric_limits<int64_t>::max()) {
+        err = std::string("qwen35moe: ")+key+" must be a nonnegative integer"; return false;
+    }
     out = (int64_t) v->num();
     return true;
 }
@@ -49,6 +56,7 @@ bool meta_f64(const GgufFile& g, const char* key, double& out, std::string& err)
     const MetaValue* v = g.get(key);
     if (!v) { err = std::string("qwen35moe: missing metadata ") + key; return false; }
     if (!v->is_num()) { err = std::string("qwen35moe: ") + key + " is not a number"; return false; }
+    if (!std::isfinite(v->num())) { err = std::string("qwen35moe: ")+key+" must be finite"; return false; }
     out = v->num();
     return true;
 }
@@ -62,10 +70,12 @@ bool meta_i64_uniform(const GgufFile& g, const char* key, int64_t& out, std::str
     if (v->count == 0) { err = std::string("qwen35moe: ") + key + " is an empty array"; return false; }
     if (v->count > v->items.size())
         { err = std::string("qwen35moe: ") + key + " is longer than this reader samples"; return false; }
-    out = (int64_t) v->items[0].num();
+    const double first = v->items[0].num();
     for (const MetaValue& e : v->items)
-        if ((int64_t) e.num() != out)
+        if (!e.is_num() || !std::isfinite(e.num()) || e.num() < 0 || e.num() != std::floor(e.num()) ||
+            e.num() >= (double) std::numeric_limits<int64_t>::max() || e.num() != first)
             { err = std::string("qwen35moe: ") + key + " varies by layer; the kernels need one value"; return false; }
+    out = (int64_t) first;
     return true;
 }
 
@@ -207,6 +217,12 @@ bool qwen35_geometry(const GgufFile& g, Qwen35Geometry& out, std::string& err) {
 
     Qwen35Geometry q;
     if (!meta_i64(g, "qwen35moe.block_count", q.n_layers, err)) return false;
+    if (g.get("qwen35moe.nextn_predict_layers")) {
+        if (!meta_i64(g,"qwen35moe.nextn_predict_layers",q.n_mtp_layers,err)) return false;
+        if (q.n_mtp_layers < 0 || q.n_mtp_layers >= q.n_layers)
+            { err = "qwen35moe: invalid nextn_predict_layers"; return false; }
+        q.n_layers -= q.n_mtp_layers;
+    }
     if (!meta_i64(g, "qwen35moe.embedding_length", q.n_embd, err)) return false;
     if (!meta_i64(g, "qwen35moe.expert_count", q.n_expert, err)) return false;
     if (!meta_i64(g, "qwen35moe.expert_used_count", q.n_expert_used, err)) return false;
@@ -232,16 +248,20 @@ bool qwen35_geometry(const GgufFile& g, Qwen35Geometry& out, std::string& err) {
     if (!meta_i64(g, "qwen35moe.ssm.group_count", q.ssm_groups, err)) return false;
     {
         const MetaValue* v = g.get("qwen35moe.rope.dimension_sections");
-        if (!v || v->type != MetaType::ARRAY || v->count != 4)
+        if (!v || v->type != MetaType::ARRAY || v->count != 4 || v->items.size() != 4)
             { err = "qwen35moe: rope.dimension_sections must be a 4-element array"; return false; }
-        for (int i = 0; i < 4; ++i) q.rope_sections[i] = (int64_t) v->items[(size_t) i].num();
+        for (int i = 0; i < 4; ++i) {
+            const auto& item = v->items[(size_t) i];
+            if (!item.is_num() || !std::isfinite(item.num()) || item.num() < 0 || item.num() > q.rope_dim ||
+                item.num() != std::floor(item.num())) { err = "qwen35moe: invalid rope.dimension_sections entry"; return false; }
+            q.rope_sections[i] = (int64_t) item.num();
+        }
     }
     // The interval falls back to llama.cpp's default of 4 only when the key is absent.
     {
         int64_t interval = 4;
         if (const MetaValue* v = g.get("qwen35moe.full_attention_interval")) {
-            if (!v->is_num()) { err = "qwen35moe: full_attention_interval is not a number"; return false; }
-            interval = (int64_t) v->num();
+            if (!meta_i64(g,"qwen35moe.full_attention_interval",interval,err)) return false;
         }
         q.full_attention_interval = interval;
     }
@@ -261,13 +281,16 @@ bool qwen35_geometry(const GgufFile& g, Qwen35Geometry& out, std::string& err) {
         { err = "qwen35moe: attention.head_count must be a multiple of head_count_kv"; return false; }
     if (q.ssm_groups <= 0 || q.ssm_dt_rank <= 0 || q.ssm_dt_rank % q.ssm_groups != 0)
         { err = "qwen35moe: ssm.time_step_rank must be a positive multiple of ssm.group_count"; return false; }
-    if (q.ssm_state <= 0 || q.ssm_inner != q.ssm_dt_rank * (q.ssm_inner / q.ssm_dt_rank))
-        { err = "qwen35moe: ssm.inner_size must be a multiple of ssm.time_step_rank"; return false; }
+    if (q.ssm_state <= 0 || q.ssm_inner <= 0 || q.ssm_inner % q.ssm_dt_rank != 0 ||
+        q.ssm_inner / q.ssm_dt_rank != q.ssm_state)
+        { err = "qwen35moe: requires equal GDN key/value head dimensions (inner_size = time_step_rank * state_size)"; return false; }
     if (q.ssm_conv_kernel <= 0)
         { err = "qwen35moe: ssm.conv_kernel must be positive"; return false; }
     if (q.n_expert <= 0 || q.n_expert_used <= 0 || q.n_expert_used > q.n_expert)
         { err = "qwen35moe: expert_count / expert_used_count are not a valid routing geometry"; return false; }
-    if (q.rms_eps <= 0.f)
+    if (q.n_ff_exp <= 0 || q.n_ff_shexp <= 0 || q.context_length <= 0 || q.rope_freq_base <= 0)
+        { err = "qwen35moe: non-positive feed-forward/context/rotary geometry"; return false; }
+    if (!std::isfinite(q.rms_eps) || q.rms_eps <= 0.f)
         { err = "qwen35moe: layer_norm_rms_epsilon must be positive"; return false; }
 
     // The embedding's output dimension is the vocabulary the head must match.
@@ -357,6 +380,58 @@ bool check_qwen35_all(const GgufModel& model, Qwen35Geometry& g, std::string& er
     }
     if (!qwen35_geometry(model.meta(), g, err)) return false;
     if (!check_qwen35_tensors(model, g, err)) return false;
+    return true;
+}
+
+bool check_qwen35_mtp(const GgufModel& model, const Qwen35Geometry& target, Qwen35Geometry& draft,
+                     std::string& err) {
+    if (!qwen35_geometry(model.meta(),draft,err)) return false;
+    if (draft.n_mtp_layers != 1) { err = "qwen35 MTP: requires exactly one trained nextn block"; return false; }
+    if (draft.n_layers != target.n_layers || draft.n_embd != target.n_embd ||
+        draft.n_expert != target.n_expert || draft.n_expert_used != target.n_expert_used ||
+        draft.n_ff_exp != target.n_ff_exp || draft.n_ff_shexp != target.n_ff_shexp ||
+        draft.n_head != target.n_head || draft.n_head_kv != target.n_head_kv ||
+        draft.head_dim != target.head_dim || draft.rope_dim != target.rope_dim ||
+        draft.rope_freq_base != target.rope_freq_base || draft.context_length != target.context_length ||
+        draft.rms_eps != target.rms_eps || draft.n_vocab != target.n_vocab ||
+        draft.ssm_state != target.ssm_state || draft.ssm_groups != target.ssm_groups ||
+        draft.ssm_dt_rank != target.ssm_dt_rank || draft.ssm_inner != target.ssm_inner ||
+        draft.ssm_conv_kernel != target.ssm_conv_kernel ||
+        draft.full_attention_interval != target.full_attention_interval ||
+        !std::equal(std::begin(draft.rope_sections),std::end(draft.rope_sections),std::begin(target.rope_sections))) {
+        err = "qwen35 MTP: geometry is incompatible with target"; return false;
+    }
+    // MTP is always dense attention, regardless of the trunk's recurrent interval.
+    Qwen35Geometry dense = draft; dense.full_attention_interval = 1;
+    if (!check_one(model,dense,draft.n_layers,err)) return false;
+    const std::string p = "blk."+std::to_string(draft.n_layers)+".nextn.";
+    const auto require = [&](const std::string& name, std::vector<int64_t> shape, TypePolicy policy) {
+        const auto* t = model.find(name);
+        if (!t) { err = "qwen35 MTP: missing "+name; return false; }
+        bool ok = t->shape.size() == shape.size();
+        for (size_t i=0;ok && i<shape.size();++i) ok = t->shape[i] == (uint64_t) shape[i];
+        if (!ok) { err = "qwen35 MTP: "+name+" is "+shape_str(*t)+", requires "+want_str(shape); return false; }
+        return check_type(*t,policy,err);
+    };
+    if (!require(p+"eh_proj.weight",{2*draft.n_embd,draft.n_embd},TypePolicy::Weight) ||
+        !require(p+"enorm.weight",{draft.n_embd},TypePolicy::F32) ||
+        !require(p+"hnorm.weight",{draft.n_embd},TypePolicy::F32)) return false;
+    for (const char* suffix : {"embed_tokens.weight","shared_head_head.weight"})
+        if (model.find(p+suffix) && !require(p+suffix,{draft.n_embd,draft.n_vocab},TypePolicy::Weight)) return false;
+    if (model.find(p+"shared_head_norm.weight")) {
+        if (!require(p+"shared_head_norm.weight",{draft.n_embd},TypePolicy::F32)) return false;
+    } else if (!require("output_norm.weight",{draft.n_embd},TypePolicy::F32)) return false;
+    if (!model.find(p+"embed_tokens.weight") &&
+        !require("token_embd.weight",{draft.n_embd,draft.n_vocab},TypePolicy::Weight)) return false;
+    if (!model.find(p+"shared_head_head.weight") &&
+        !require(draft.output_tied ? "token_embd.weight" : "output.weight",{draft.n_embd,draft.n_vocab},TypePolicy::Weight)) return false;
+    for (size_t sh=0;sh<model.size();++sh) for (const auto& t : model.shard(sh).tensors()) {
+        if (t.name.rfind("blk.",0) != 0) continue;
+        const size_t dot = t.name.find('.',4);
+        if (dot == std::string::npos || t.name.substr(4,dot-4) != std::to_string(draft.n_layers)) {
+            err = "qwen35 MTP: expected only block "+std::to_string(draft.n_layers)+", found "+t.name; return false;
+        }
+    }
     return true;
 }
 

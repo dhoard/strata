@@ -16,6 +16,7 @@
 
 #include "strata/core/qwen35.hpp"
 
+#include <algorithm>
 #include <cmath>
 #include <cstdint>
 #include <memory>
@@ -48,6 +49,14 @@ void matvec(const Mat& m, const float* x, float* y);
 
 using QuantMatvecFn = void (*)(int type, const void* w, int64_t n_in, int64_t n_out, const float* x, float* y);
 extern QuantMatvecFn g_quant_matvec;
+using FloatDotFn = float (*)(int64_t n, const float* x, const float* y);
+extern FloatDotFn g_float_dot;
+using UnaryVecFn = void (*)(int n, float* y, const float* x);
+using SwigluVecFn = void (*)(int n, float* y, const float* gate, const float* up);
+using SoftmaxVecFn = void (*)(int n, float* values);
+extern UnaryVecFn g_silu_vec;
+extern SwigluVecFn g_swiglu_vec;
+extern SoftmaxVecFn g_softmax_vec;
 /// GPU (HIP/CUDA) dense matvec.  Return true when it handled `m` (its `dev` pointer is set); `matvec` falls
 /// back to `g_quant_matvec` otherwise.  Installed by qwen35_gpu_upload.
 using GpuMatvecFn = bool (*)(const Mat& m, const float* x, float* y);
@@ -73,7 +82,8 @@ void rms_norm(const float* x, const float* w, int64_t n, float eps, float* y);
 void l2_norm(const float* x, int64_t n, float eps, float* y);
 inline float silu(float x) { return x / (1.0f + std::exp(-x)); }
 inline float sigmoid(float x) { return 1.0f / (1.0f + std::exp(-x)); }
-inline float softplus(float x) { return std::log1p(std::exp(x)); }
+// Match GGML's threshold and float rounding, including the addition before log.
+inline float softplus(float x) { return x > 20.0f ? x : std::log(1.0f + std::exp(x)); }
 
 // ---------------------------------------------------------------- one GDN layer
 
@@ -177,13 +187,26 @@ struct TrunkWeights {
     int64_t eos_token = -1;   ///< tokenizer.ggml.eos_token_id, so the serve loop can stop on it
 };
 
+struct TrunkState;
+struct TrunkSnapshot {
+    std::vector<GdnState> gdn;
+    std::vector<int64_t> attention_n;
+    const TrunkState* owner = nullptr;
+    uint64_t generation = 0, tail_revision = 0;
+    int64_t position = 0;
+};
+
 struct TrunkState {
     std::vector<GdnState> gdn;
     std::vector<AttnState> attn;
+    int64_t position = 0;
+    uint64_t generation = 0, next_revision = 0;
+    std::vector<uint64_t> revisions;
     /// `context` is the KV capacity in cells (the launcher's --max-context); 0 means the model's native
     /// maximum.  The attention states are sized for it, so a 128K deployment holds 128K of KV, not the
     /// model's 262K.
     void reset(const Qwen35Geometry& g, int64_t context) {
+        ++generation; position = 0; revisions.clear();
         const int64_t cells = context > 0 ? context : g.context_length;
         gdn.assign((size_t) g.n_layers, {});
         attn.assign((size_t) g.n_layers, {});
@@ -193,15 +216,39 @@ struct TrunkState {
         }
     }
     void zero(const Qwen35Geometry& g) {
+        ++generation; position = 0; revisions.clear();
         for (int64_t l = 0; l < g.n_layers; ++l) {
             if (g.is_recurrent(l)) gdn[(size_t) l].zero();
             else attn[(size_t) l].zero();
         }
     }
+    // Copy recurrent state and logical KV cursors, never the entire context's K/V storage. Appended
+    // rejected cells are masked by the restored cursors and overwritten before becoming visible.
+    TrunkSnapshot snapshot() const;
+    bool restore(const TrunkSnapshot& snapshot, std::string& err);
 };
 
 /// `token` through the whole trunk at the state's current position.  `logits` is n_vocab floats.
-void trunk_forward(const Qwen35Geometry& g, const TrunkWeights& w, TrunkState& st, int64_t token, float* logits);
+using TrunkTraceFn = void (*)(int64_t layer, const float* residual, int64_t width, void* user);
+// Optional diagnostic hook, local to the inference thread. Names match upstream's graph callbacks.
+using StageTraceFn = void (*)(int64_t layer, const char* name, const float* values, int64_t n);
+extern thread_local StageTraceFn g_stage_trace;
+void trunk_forward(const Qwen35Geometry& g, const TrunkWeights& w, TrunkState& st, int64_t token,
+                   float* logits, TrunkTraceFn trace = nullptr, void* user = nullptr, float* hidden = nullptr);
+
+struct MtpWeights {
+    Mat embedding, output, eh_proj;
+    const float *enorm = nullptr, *hnorm = nullptr, *head_norm = nullptr, *post_norm = nullptr;
+    AttnLayerWeights attn;
+    MoeLayerWeights moe;
+    std::vector<ExpertWeights> experts;
+    std::shared_ptr<void> backing;
+};
+bool load_mtp(const std::string& path, const Qwen35Geometry& target, MtpWeights& weights, std::string& err);
+// Input h is the target's post-output-norm hidden at position t-1, token is at position t.
+// The draft outputs its own post-head-norm hidden for chaining subsequent draft predictions.
+void mtp_forward(const Qwen35Geometry& g, const MtpWeights& w, AttnState& st, int64_t token,
+                 const float* hidden, float* logits, float* next_hidden);
 
 /// Build the trunk weights from an Ornith/Qwen35MoE GGUF (mmapped; no copy, no dequantization).  Runs the
 /// architecture guard first, so a malformed artifact fails here with a tensor-naming error.

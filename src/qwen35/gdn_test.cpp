@@ -188,21 +188,21 @@ int main() {
         check(rel(got, want) < 1e-5, "one token, fresh state, matches the float64 reference");
     }
 
-    // Eight tokens: the conv history and the recurrent state must both carry over correctly.
+    // Thirty-two tokens: the conv history and the recurrent state must both carry over correctly.
     {
         q::GdnState st; st.resize(g);
         RefState rs; rs.conv.assign((size_t) (g.ssm_conv_kernel - 1) * g.conv_channels(), 0.0);
         rs.rec.assign((size_t) g.ssm_dt_rank * g.ssm_state * g.ssm_state, 0.0);
         std::normal_distribution<float> nd(0.f, 1.f);
         double worst = 0.0;
-        for (int t = 0; t < 8; ++t) {
+        for (int t = 0; t < 32; ++t) {
             std::vector<float> x((size_t) g.n_embd), got((size_t) g.n_embd), want((size_t) g.n_embd);
             for (auto& q2 : x) q2 = nd(rng);
             q::gdn_layer(g, vw, st, x.data(), got.data());
             ref_layer(g, w, rs, x.data(), want.data());
             worst = std::max(worst, rel(got, want));
         }
-        check(worst < 1e-5, "eight tokens: conv history and recurrent state carry over");
+        check(worst < 1e-5, "32 tokens: conv history and recurrent state carry over");
     }
 
     // zero() returns the state to the fresh-sequence reference.

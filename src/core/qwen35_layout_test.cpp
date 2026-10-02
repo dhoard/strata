@@ -10,6 +10,7 @@
 #include "strata/core/qwen35.hpp"
 
 #include <cstdint>
+#include <algorithm>
 #include <cstring>
 #include <filesystem>
 #include <fstream>
@@ -321,6 +322,41 @@ int main(int argc, char** argv) {
         Qwen35Geometry g; std::string err;
         const bool ok = validate(f, "tied", err, &g);
         check(ok && g.output_tied, "a missing output.weight is accepted as a tied head");
+    }
+
+    {
+        Fixture target; target.meta(); target.tensors_all();
+        Qwen35Geometry g; std::string err;
+        check(validate(target,"mtp-target",err,&g),"MTP target fixture validates");
+        Fixture draft = target;
+        for (auto& kv : draft.kvs) if (kv.key == "qwen35moe.block_count") kv.value = enc_u32(5);
+        draft.kvs.push_back({"qwen35moe.nextn_predict_layers",enc_u32(1)});
+        draft.tensors.erase(std::remove_if(draft.tensors.begin(),draft.tensors.end(),[](const Ten& t) {
+            return t.name.rfind("blk.",0)==0 && t.name.rfind("blk.3.",0)!=0;
+        }),draft.tensors.end());
+        for (auto& t : draft.tensors) if (t.name.rfind("blk.3.",0)==0) t.name.replace(0,6,"blk.4.");
+        draft.add("blk.4.nextn.eh_proj.weight",{128,64});
+        draft.add("blk.4.nextn.enorm.weight",{64});
+        draft.add("blk.4.nextn.hnorm.weight",{64});
+        draft.add("blk.4.nextn.shared_head_norm.weight",{64});
+        auto validate_draft = [&](const Fixture& f) {
+            err.clear(); auto path = f.write("mtp-draft"); bool ok = false;
+            try { strata::GgufModel m({path.string()}); Qwen35Geometry d; ok = check_qwen35_mtp(m,g,d,err); }
+            catch (const std::exception& e) { err = e.what(); }
+            std::filesystem::remove(path); return ok;
+        };
+        check(validate_draft(draft),"external MTP-only block passes strict shape/geometry guard");
+        auto bad = draft;
+        for (auto& t : bad.tensors) if (t.name == "blk.4.nextn.eh_proj.weight") t.shape[0] = 64;
+        check(!validate_draft(bad) && mentions(err,"eh_proj"),"MTP rejects malformed concatenation projection");
+        bad = draft;
+        for (auto& kv : bad.kvs) if (kv.key == "qwen35moe.rope.freq_base") kv.value = enc_f32(10000);
+        check(!validate_draft(bad) && mentions(err,"incompatible"),"MTP rejects incompatible rotary metadata");
+        bad = draft; bad.add("blk.0.attn_norm.weight",{64});
+        check(!validate_draft(bad) && mentions(err,"expected only block"),"MTP rejects a target trunk masquerading as a draft-only artifact");
+        bad = draft;
+        for (auto& t : bad.tensors) if (t.name == "blk.4.nextn.hnorm.weight") t.type = 1;
+        check(!validate_draft(bad) && mentions(err,"hnorm"),"MTP rejects a non-F32 hidden norm");
     }
 
     std::printf("qwen35_layout_test: %d failures\n", g_fail);

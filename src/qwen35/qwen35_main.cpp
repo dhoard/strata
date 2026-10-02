@@ -13,9 +13,20 @@
 // This is the same protocol `serve/server.py` speaks to `strata --serve`, so the Python server, the OpenAI API
 // and run3.sh need no change to drive this binary.  Sampling keys the server sends are honoured where they are
 // implemented and ignored otherwise.
-#include "strata/qwen35/qwen35.hpp"
+#include "strata/qwen35/session.hpp"
 
 #include <algorithm>
+#include <atomic>
+#include <charconv>
+#include <condition_variable>
+#include <deque>
+#include <memory>
+#include <mutex>
+#include <stdexcept>
+#include <thread>
+#ifdef _OPENMP
+#include <omp.h>
+#endif
 #include <chrono>
 #include <cmath>
 #include <cstdio>
@@ -36,7 +47,12 @@ struct Sampling {
     int top_k = 0;
     float min_p = 0.0f;
     uint64_t seed = 0;
+    float penalty_repeat = 1.0f, penalty_freq = 0.0f, penalty_present = 0.0f;
+    int64_t penalty_last_n = 64;
 };
+
+int64_t select_with_penalties(const std::vector<float>& logits, const Sampling& s,
+                             std::mt19937_64& rng, const std::vector<int64_t>& history);
 
 /// Greedy when temperature <= 0; otherwise temperature + top_k + top_p + min_p over the full vocabulary.
 int64_t sample(const std::vector<float>& logits, const Sampling& s, std::mt19937_64& rng) {
@@ -80,180 +96,163 @@ int64_t sample(const std::vector<float>& logits, const Sampling& s, std::mt19937
     return keep.back();
 }
 
+int64_t select_with_penalties(const std::vector<float>& logits, const Sampling& s,
+                             std::mt19937_64& rng, const std::vector<int64_t>& history) {
+    if (s.penalty_repeat == 1 && s.penalty_freq == 0 && s.penalty_present == 0) return sample(logits,s,rng);
+    std::vector<float> adjusted = logits;
+    std::vector<int> counts(logits.size());
+    const size_t begin = history.size() > (size_t) s.penalty_last_n ? history.size()-(size_t) s.penalty_last_n : 0;
+    for (size_t i=begin;i<history.size();++i) ++counts[(size_t) history[i]];
+    for (size_t i=0;i<logits.size();++i) if (counts[i]) {
+        adjusted[i] = adjusted[i] <= 0 ? adjusted[i]*s.penalty_repeat : adjusted[i]/s.penalty_repeat;
+        adjusted[i] -= counts[i]*s.penalty_freq+s.penalty_present;
+    }
+    return sample(adjusted,s,rng);
+}
+
+int64_t integer(const std::string& s) {
+    int64_t n = 0; const auto r = std::from_chars(s.data(),s.data()+s.size(),n);
+    if (r.ec != std::errc() || r.ptr != s.data()+s.size()) throw std::invalid_argument("invalid integer: "+s);
+    return n;
+}
 std::vector<int64_t> parse_ids(const std::string& s) {
     std::vector<int64_t> ids;
-    for (size_t b = 0; b < s.size();) {
-        size_t e = s.find(',', b);
-        if (e == std::string::npos) e = s.size();
-        if (e > b) ids.push_back(std::strtoll(s.substr(b, e - b).c_str(), nullptr, 10));
-        b = e + 1;
+    for (size_t b=0;b<s.size();) {
+        const size_t e = s.find(',',b);
+        ids.push_back(integer(s.substr(b,e == std::string::npos ? e : e-b)));
+        if (e == std::string::npos) break;
+        b=e+1; if (b == s.size()) throw std::invalid_argument("empty token after comma");
     }
     return ids;
 }
 
-int run_serve(q::TrunkWeights& w, strata::core::Qwen35Geometry& g, int64_t max_context) {
-    const int64_t ctx = max_context > 0 ? max_context : g.context_length;
-    q::TrunkState st;
-    st.reset(g, ctx);
-    std::vector<float> logits((size_t) g.n_vocab);
-    std::printf("READY %lld stop\n", (long long) ctx);
+void done(const q::GenerationStats& r) {
+    std::printf("DONE %lld %lld %.3f %.3f %s %lld %lld 0\n",(long long) r.generated,
+                (long long) r.prompt_tokens,r.prompt_ms,r.decode_ms,r.finish.c_str(),
+                (long long) r.accepted,(long long) r.proposed);
     std::fflush(stdout);
-
-    std::string line;
-    std::mt19937_64 rng(0x5EED);
-    while (std::getline(std::cin, line)) {
-        if (line.rfind("GEN ", 0) == 0 || line.rfind("GENI ", 0) == 0) {
-            std::vector<std::string> f;
-            for (size_t b = 0; b < line.size();) {
-                size_t e = line.find(' ', b);
-                if (e == std::string::npos) e = line.size();
-                if (e > b) f.push_back(line.substr(b, e - b));
-                b = e + 1;
-            }
-            if (f.size() < 3) { std::printf("ERR malformed GEN\n"); std::fflush(stdout); continue; }
-            const int64_t max_new = std::strtoll(f[1].c_str(), nullptr, 10);
-            const std::string ids_field = f.back();
-            Sampling s;
-            for (size_t i = 2; i + 1 < f.size(); ++i) {
-                const size_t eq = f[i].find('=');
-                if (eq == std::string::npos) continue;
-                const std::string k = f[i].substr(0, eq);
-                const std::string v = f[i].substr(eq + 1);
-                if (k == "temperature") s.temperature = std::strtof(v.c_str(), nullptr);
-                else if (k == "top_p") s.top_p = std::strtof(v.c_str(), nullptr);
-                else if (k == "top_k") s.top_k = std::atoi(v.c_str());
-                else if (k == "min_p") s.min_p = std::strtof(v.c_str(), nullptr);
-                else if (k == "seed") s.seed = std::strtoull(v.c_str(), nullptr, 10);
-            }
-            if (s.seed) rng.seed(s.seed);
-            const std::vector<int64_t> ids = parse_ids(ids_field);
-            if (ids.empty()) { std::printf("ERR empty prompt\n"); std::fflush(stdout); continue; }
-
-            if ((int64_t) ids.size() > ctx) {
-                std::printf("ERR prompt has %zu tokens but the context is %lld\n", ids.size(), (long long) ctx);
-                std::fflush(stdout);
-                continue;
-            }
-            st.zero(g);
-            const auto t0 = std::chrono::steady_clock::now();
-            for (int64_t t : ids) q::trunk_forward(g, w, st, t, logits.data());
-            const auto t1 = std::chrono::steady_clock::now();
-            const double pms = std::chrono::duration<double, std::milli>(t1 - t0).count();
-
-            int64_t generated = 0;
-            std::string finish = "length";
-            const auto d0 = std::chrono::steady_clock::now();
-            for (int64_t n = 0; n < max_new && (int64_t) ids.size() + n < ctx; ++n) {
-                const int64_t best = sample(logits, s, rng);
-                if (w.eos_token >= 0 && best == w.eos_token) { finish = "stop"; break; }
-                std::printf("T %lld\n", (long long) best);
-                std::fflush(stdout);
-                ++generated;
-                q::trunk_forward(g, w, st, best, logits.data());
-            }
-            const auto d1 = std::chrono::steady_clock::now();
-            const double dms = std::chrono::duration<double, std::milli>(d1 - d0).count();
-            std::printf("DONE %lld %zu %.3f %.3f %s\n", (long long) generated, ids.size(), pms, dms, finish.c_str());
-            std::fflush(stdout);
-        } else if (line.rfind("STOP", 0) == 0) {
-            // one request at a time: STOP arrives only while a request runs, which this synchronous loop cannot see.
-        } else if (line.rfind("QUIT", 0) == 0) {
-            break;
-        }
-    }
-    return 0;
+    std::fprintf(stderr,"qwen35 timing: prefill=%.3f ms decode=%.3f ms generated=%lld tok/s=%.3f accepted=%lld/%lld draft=%.3f ms verify=%.3f ms\n",
+                 r.prompt_ms,r.decode_ms,(long long) r.generated,r.decode_ms ? 1000*r.generated/r.decode_ms : 0,
+                 (long long) r.accepted,(long long) r.proposed,r.draft_ms,r.verify_ms);
 }
 
-}  // namespace
+struct Command { std::string line; std::shared_ptr<std::atomic<bool>> stop; };
+int run_serve(q::InferenceSession& session, const strata::core::Qwen35Geometry& g, int64_t eos, int spec) {
+    std::mutex mutex; std::condition_variable ready; std::deque<Command> commands; bool eof = false;
+    // Keep reading while the inference thread works. STOP belongs to the preceding GEN, including
+    // when the reader receives both before inference starts. It cannot cancel the next request.
+    std::thread reader([&] {
+        std::string line; std::shared_ptr<std::atomic<bool>> current;
+        while (std::getline(std::cin,line)) {
+            if (line == "STOP") { if (current) current->store(true); continue; }
+            Command command{line,{}};
+            if (line.rfind("GEN ",0) == 0) command.stop = current = std::make_shared<std::atomic<bool>>(false);
+            if (line == "QUIT" && current) current->store(true);
+            { std::lock_guard<std::mutex> lock(mutex); commands.push_back(std::move(command)); }
+            ready.notify_one();
+            if (line == "QUIT") break;
+        }
+        { std::lock_guard<std::mutex> lock(mutex); eof = true; }
+        ready.notify_one();
+    });
+    std::printf("READY %lld stop\n",(long long) session.context()); std::fflush(stdout);
+    for (;;) {
+        Command c;
+        { std::unique_lock<std::mutex> lock(mutex); ready.wait(lock,[&]{return eof || !commands.empty();});
+          if (commands.empty()) break;
+          c = std::move(commands.front()); commands.pop_front(); }
+        if (c.line == "QUIT") break;
+        try {
+            if (c.line.rfind("GEN ",0) != 0) throw std::invalid_argument("expected GEN, STOP or QUIT");
+            std::vector<std::string> f;
+            for (size_t b=0;b<c.line.size();) {
+                const size_t e = c.line.find(' ',b); const auto field = c.line.substr(b,e == std::string::npos ? e : e-b);
+                if (!field.empty()) f.push_back(field);
+                if (e == std::string::npos) break; b=e+1;
+            }
+            if (f.size() < 3) throw std::invalid_argument("malformed GEN");
+            const int64_t max_new = integer(f[1]); const auto ids = parse_ids(f.back()); Sampling sampling;
+            for (size_t i=2;i+1<f.size();++i) {
+                const size_t eq = f[i].find('='); if (eq == std::string::npos) throw std::invalid_argument("malformed sampling key");
+                const auto key = f[i].substr(0,eq), val = f[i].substr(eq+1);
+                if (key == "temperature") sampling.temperature = std::stof(val);
+                else if (key == "top_p") sampling.top_p = std::stof(val);
+                else if (key == "top_k") sampling.top_k = (int) integer(val);
+                else if (key == "min_p") sampling.min_p = std::stof(val);
+                else if (key == "seed") sampling.seed = (uint64_t) integer(val);
+                else if (key == "penalty_repeat") sampling.penalty_repeat = std::stof(val);
+                else if (key == "penalty_freq") sampling.penalty_freq = std::stof(val);
+                else if (key == "penalty_present") sampling.penalty_present = std::stof(val);
+                else if (key == "penalty_last_n") sampling.penalty_last_n = integer(val);
+                else throw std::invalid_argument("unsupported sampling key: "+key);
+            }
+            if (!std::isfinite(sampling.temperature) || sampling.temperature < 0 ||
+                !std::isfinite(sampling.top_p) || sampling.top_p <= 0 || sampling.top_p > 1 ||
+                !std::isfinite(sampling.min_p) || sampling.min_p < 0 || sampling.min_p > 1 || sampling.top_k < 0 ||
+                !std::isfinite(sampling.penalty_repeat) || sampling.penalty_repeat <= 0 ||
+                !std::isfinite(sampling.penalty_freq) || !std::isfinite(sampling.penalty_present) || sampling.penalty_last_n < 0)
+                throw std::invalid_argument("invalid sampling settings");
+            std::mt19937_64 rng(sampling.seed);
+            auto history = ids;
+            const bool raw_greedy = sampling.temperature == 0 && sampling.penalty_repeat == 1 && sampling.penalty_freq == 0 && sampling.penalty_present == 0;
+            const auto result = q::generate(session,g,eos,ids,max_new,raw_greedy ? spec : 0,
+                [&](const auto& logits){return select_with_penalties(logits,sampling,rng,history);},
+                [&](int64_t token){history.push_back(token); std::printf("T %lld\n",(long long) token); std::fflush(stdout);},
+                [&]{return c.stop->load();});
+            done(result);
+        } catch (const std::exception& e) { std::printf("ERR %s\n",e.what()); std::fflush(stdout); }
+    }
+    reader.join(); return 0;
+}
+} // namespace
 
 int main(int argc, char** argv) {
-    std::setvbuf(stdout, nullptr, _IONBF, 0);
-    std::string path;
-    std::vector<int64_t> tokens;
-    int64_t max_new = 8;
-    int64_t max_context = 0;
-    bool check_only = false, serve = false;
-    for (int i = 1; i < argc; ++i) {
-        const std::string a = argv[i];
-        auto next = [&]() -> const char* {
-            if (i + 1 >= argc) { std::fprintf(stderr, "%s needs a value\n", a.c_str()); std::exit(2); }
-            return argv[++i];
-        };
-        if (a == "--model") path = next();
-        else if (a == "--tokens") tokens = parse_ids(next());
-        else if (a == "--max-new") max_new = std::strtoll(next(), nullptr, 10);
-        else if (a == "--max-context") max_context = std::strtoll(next(), nullptr, 10);
-        else if (a == "--serve") serve = true;
-        else if (a == "--check") check_only = true;
-        else if (a == "--capabilities") { std::printf("qwen35moe\n"); return 0; }
-        else if (a == "--mtp" || a == "--spec" || a == "--spec-min-p" || a == "--kv" ||
-                 a == "--prefill" || a == "--pool-workers" || a == "--expert-cache" ||
-                 a == "--adapt-every" || a == "--pcie-frac" || a == "--vram-reserve-mib") {
-            next();   // accepted for the shared launcher, not used by this CPU path
+    std::setvbuf(stdout,nullptr,_IONBF,0);
+    try {
+        std::string path, mtp_path; std::vector<int64_t> tokens;
+        int64_t max_new = 8, context = 0; int spec = 0, workers = 0, force_reject = -1;
+        bool check = false, serve = false;
+        for (int i=1;i<argc;++i) {
+            const std::string arg = argv[i];
+            const auto next = [&]() -> std::string {
+                if (i+1>=argc) throw std::invalid_argument(arg+" requires a value"); return argv[++i];
+            };
+            if (arg == "--model") path = next();
+            else if (arg == "--mtp") mtp_path = next();
+            else if (arg == "--tokens") tokens = parse_ids(next());
+            else if (arg == "--max-new") max_new = integer(next());
+            else if (arg == "--max-context") context = integer(next());
+            else if (arg == "--spec") spec = (int) integer(next());
+            else if (arg == "--pool-workers") workers = (int) integer(next());
+            else if (arg == "--force-reject") force_reject = (int) integer(next());
+            else if (arg == "--serve") serve = true;
+            else if (arg == "--check") check = true;
+            else if (arg == "--capabilities") { std::puts("qwen35moe mtp greedy-spec cancellation"); return 0; }
+            else throw std::invalid_argument("unknown option: "+arg);
         }
-        else { std::fprintf(stderr, "strata-qwen35: unknown option %s\n", a.c_str()); return 2; }
-    }
-    if (path.empty()) {
-        std::fprintf(stderr, "usage: strata-qwen35 --model M.gguf [--serve] [--tokens \"1,2\"] [--max-new N]\n");
-        return 2;
-    }
-
-    q::qwen35_enable_ggml();
-    strata::core::Qwen35Geometry g;
-    q::TrunkWeights w;
-    std::string err;
-    if (!q::load_trunk(path, g, w, err)) {
-        std::fprintf(stderr, "strata-qwen35: %s\n", err.c_str());
-        return 1;
-    }
-    std::fprintf(stderr, "strata-qwen35: %lld layers, %lld wide, %lld experts top-%lld, vocab %lld, eos %lld\n",
-                 (long long) g.n_layers, (long long) g.n_embd, (long long) g.n_expert,
-                 (long long) g.n_expert_used, (long long) g.n_vocab, (long long) w.eos_token);
-    // The GPU dense tier (OPT-IN, STRATA_QWEN35_GPU=1): uploads the dense projections to VRAM and routes
-    // their matvecs through native_mmvq.  It is NOT the default because it copies the activation in and the
-    // result out per matvec (a sync each), and routed experts stay on ggml-cpu: measured 0.7 tok/s versus the
-    // CPU path's 10, so it is a building block for device-resident execution, not a usable tier yet.
-    {
-        const char* e = std::getenv("STRATA_QWEN35_GPU");
-        if (e == nullptr || std::atoi(e) != 0) {   // on when a device is usable; STRATA_QWEN35_GPU=0 forces CPU
-            std::string gerr;
-            if (q::qwen35_gpu_init(gerr) && q::qwen35_gpu_upload(w, gerr)) {
-                std::fprintf(stderr, "strata-qwen35: GPU dense tier: %.2f GiB in VRAM\n",
-                             (double) q::qwen35_gpu_dense_bytes() / (1024.0 * 1024.0 * 1024.0));
-            } else {
-                std::fprintf(stderr, "strata-qwen35: GPU dense tier unavailable (%s); using ggml-cpu\n", gerr.c_str());
-            }
-        }
-    }
-    if (check_only) { std::printf("check ok\n"); return 0; }
-    if (serve) return run_serve(w, g, max_context > 0 ? max_context : g.context_length);
-    if (tokens.empty()) { std::fprintf(stderr, "strata-qwen35: --tokens is required without --serve\n"); return 2; }
-
-    q::TrunkState st;
-    st.reset(g, max_context);
-    std::vector<float> logits((size_t) g.n_vocab);
-    const auto t0 = std::chrono::steady_clock::now();
-    for (int64_t tok : tokens) q::trunk_forward(g, w, st, tok, logits.data());
-    const auto t1 = std::chrono::steady_clock::now();
-    const double pms = std::chrono::duration<double, std::milli>(t1 - t0).count();
-    std::fprintf(stderr, "prefill %zu tokens in %.0f ms (%.1f tok/s)\n", tokens.size(), pms,
-                 pms > 0 ? 1000.0 * (double) tokens.size() / pms : 0.0);
-    std::printf("prompt:");
-    for (int64_t t : tokens) std::printf(" %lld", (long long) t);
-    std::printf("\ngen:");
-    Sampling s;
-    std::mt19937_64 rng(0);
-    const auto d0 = std::chrono::steady_clock::now();
-    for (int64_t n = 0; n < max_new; ++n) {
-        const int64_t best = sample(logits, s, rng);
-        std::printf(" %lld", (long long) best);
-        std::fflush(stdout);
-        q::trunk_forward(g, w, st, best, logits.data());
-    }
-    const auto d1 = std::chrono::steady_clock::now();
-    const double dms = std::chrono::duration<double, std::milli>(d1 - d0).count();
-    std::printf("\n");
-    std::fprintf(stderr, "decode %lld tokens in %.0f ms (%.2f tok/s)\n", (long long) max_new, dms,
-                 dms > 0 ? 1000.0 * (double) max_new / dms : 0.0);
-    return 0;
+        if (path.empty()) throw std::invalid_argument("--model is required");
+        if (context < 0 || max_new < 0 || spec < 0 || spec > 4 || workers < 0 || workers > 256 || force_reject < -1 || force_reject > 4)
+            throw std::invalid_argument("invalid context/output/spec/worker/rejection setting");
+        if (spec && mtp_path.empty()) throw std::invalid_argument("--spec requires a trained external --mtp GGUF");
+#ifdef _OPENMP
+        if (workers) omp_set_num_threads(workers);
+#endif
+        q::qwen35_enable_ggml(); strata::core::Qwen35Geometry g; q::TrunkWeights w; std::string err;
+        if (!q::load_trunk(path,g,w,err)) throw std::runtime_error(err);
+        if (!context) context = g.context_length;
+        if (context > g.context_length) throw std::invalid_argument("requested context exceeds model maximum");
+        q::MtpWeights mtp;
+        if (!mtp_path.empty() && !q::load_mtp(mtp_path,g,mtp,err)) throw std::runtime_error(err);
+        std::fprintf(stderr,"strata-qwen35: %lld layers, %lld wide, %lld experts top-%lld, context %lld, trained MTP %s spec %d\n",
+                     (long long) g.n_layers,(long long) g.n_embd,(long long) g.n_expert,(long long) g.n_expert_used,
+                     (long long) context,mtp_path.empty() ? "absent" : "loaded",spec);
+        if (check) { std::puts("check ok"); return 0; }
+        q::CpuSession session(g,w,spec ? &mtp : nullptr,context);
+        if (serve) return run_serve(session,g,w.eos_token,spec);
+        Sampling sampling; std::mt19937_64 rng(0);
+        const auto result = q::generate(session,g,w.eos_token,tokens,max_new,spec,
+            [&](const auto& logits){return sample(logits,sampling,rng);},
+            [](int64_t token){std::printf("%lld,",(long long) token);},[]{return false;},force_reject);
+        std::puts(""); done(result); return 0;
+    } catch (const std::exception& e) { std::fprintf(stderr,"strata-qwen35: %s\n",e.what()); return 1; }
 }
