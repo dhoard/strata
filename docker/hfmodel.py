@@ -92,12 +92,14 @@ def snapshot_dir(rd: Path, rev: str = "") -> Path | None:
     snaps = rd / "snapshots"
     if not snaps.is_dir():
         return None
-    if not rev and (rd / "refs" / "main").is_file():
-        rev = (rd / "refs" / "main").read_text().strip()
+    ref = rd / "refs" / (rev or "main")
+    if ref.is_file():
+        rev = ref.read_text().strip()
     if rev:
         for cand in (snaps / rev, snaps / rev[:40]):
             if cand.is_dir():
                 return cand
+        return None
     dirs = sorted((d for d in snaps.iterdir() if d.is_dir()), key=lambda d: d.name)
     return dirs[-1] if dirs else None
 
@@ -127,6 +129,9 @@ def _find_in_snapshot(snap: Path, model: str, i: int, fam: dict) -> Path | None:
             cand = snap / fam["file"]
             if cand.is_file():
                 return cand
+            # This is an explicit quantization contract. Another Ornith GGUF in the same
+            # snapshot must not silently replace the requested architecture-aware quant.
+            return None
         if fam.get("title"):
             hits = sorted(h for h in snap.glob(f"{fam['title']}-*.gguf") if h.is_file())
             if hits:
@@ -160,12 +165,20 @@ def shard_path(root: Path, model: str, i: int, rev: str = "", repo: str = "") ->
     return _find_in_snapshot(snap, model, i, fam)
 
 
+def mtp_source(model: str, repo: str = "") -> dict:
+    fam = family_of(model,repo) or {}
+    source = dict(fam.get("mtp",{}))
+    if source:
+        source["repo"] = os.environ.get("STRATA_MTP_REPO") or source["repo"]
+        source["file"] = os.environ.get("STRATA_MTP_FILE") or source["file"]
+    return source
+
+
 def mtp_path(root: Path, model: str, rev: str = "", repo: str = "") -> Path | None:
     """The external MTP draft GGUF for a family that has one (Ornith), or None."""
-    fam = family_of(model, repo)
-    if not fam or not fam.get("mtp"):
+    m = mtp_source(model,repo)
+    if not m:
         return None
-    m = fam["mtp"]
     snap = snapshot_dir(repo_dir(root, m["repo"]), rev)
     if snap is None:
         return None
@@ -240,11 +253,10 @@ def main() -> int:
         sys.exit(f"hfmodel: unknown model '{a.model}'. Known: {', '.join(sorted(MODELS))}")
 
     if a.what == "mtp":
-        p = mtp_path(root, a.model, a.rev, a.repo)
+        p = mtp_path(root, a.model, os.environ.get("STRATA_MTP_REV", ""), a.repo)
         print("" if p is None else str(p.resolve() if a.resolve else p))
         if p is None and not a.allow_missing:
-            fam = family_of(a.model, a.repo) or {}
-            m = fam.get("mtp", {})
+            m = mtp_source(a.model,a.repo)
             if m:
                 print(f"hfmodel: the MTP draft ({m['repo']} / {m['file']}) is not in {root}", file=sys.stderr)
                 print(f"  hf download {m['repo']} --include '{m['file']}'", file=sys.stderr)
@@ -281,8 +293,8 @@ def main() -> int:
 
     if a.what == "shell":       # eval'able assignments for bootstrap-model.sh / the entrypoint
         import shlex
-        m = fam.get("mtp", {})
-        mp = mtp_path(root, a.model, a.rev, a.repo)
+        m = mtp_source(a.model,a.repo)
+        mp = mtp_path(root, a.model, os.environ.get("STRATA_MTP_REV", ""), a.repo)
         for key, value in {"MODEL": a.model, "CACHED": int(not missing), "REPO": fam["repo"],
                            "HF_CACHE": str(root), "SHARD1": shown(1), "SHARD2": shown(2),
                            "FILES": n_files(fam),

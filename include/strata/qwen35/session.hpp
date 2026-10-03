@@ -14,6 +14,13 @@ public:
     virtual int64_t context() const = 0;
     virtual bool has_mtp() const = 0;
     virtual void target(int64_t token, float* logits, float* hidden) = 0;
+    // Contiguous causal tokens; output pointer arrays may contain null entries (prefill).
+    // Every token has the same arithmetic as target(), including verification checkpoints.
+    virtual int prefill_batch_size() const { return 1; }
+    virtual void target_batch(const int64_t* tokens, int count, float* const* logits, float* const* hidden) {
+        for (int i = 0; i < count; ++i) target(tokens[i], logits ? logits[i] : nullptr, hidden ? hidden[i] : nullptr);
+    }
+    virtual void begin_decode() {}
     virtual void draft(int64_t token, const float* hidden, float* logits, float* next_hidden) = 0;
     virtual void begin_verify() = 0;
     virtual void commit_verify(int64_t accepted) = 0;

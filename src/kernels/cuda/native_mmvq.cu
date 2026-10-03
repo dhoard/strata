@@ -31,6 +31,7 @@
 #include <cuda_runtime.h>
 
 #include <cstdint>
+#include <cstdlib>
 #include <limits>
 #include <stdexcept>
 #include <string>
@@ -1490,6 +1491,49 @@ void native_mmvq(int ggml_type, const void* weights, const void* x_q8_1, float* 
         iq_mmvq(ggml_type, weights, x_q8_1, y, n_in, n_out, ncols, stream); break;
     default: throw std::invalid_argument("unsupported native MMVQ GGML type");
     }
+}
+
+namespace {
+template<typename F,int NW,int NC,int R> void rdna_launch_rows(const void*w,const void*x,float*y,int ni,int no,cudaStream_t s){
+    native_mmvq_multi_kernel<F,NC,NW,R><<<unsigned((no+R-1)/R),dim3(32,NW),0,s>>>(static_cast<const typename F::Block*>(w),static_cast<const Q81Block*>(x),y,ni,no);
+}
+template<typename F,int NW,int NC> void rdna_launch_n(const void*w,const void*x,float*y,int ni,int no,cudaStream_t s){
+    // Each row retains the same eight/one-warp reduction. Row tiling only amortizes
+    // block scheduling and repeated activation loads; it never regroups a dot product.
+    static const int rows=[] {const char* p=std::getenv("STRATA_QWEN35_MMVQ_ROWS");
+        const int n=p?std::atoi(p):1;if(n!=1&&n!=2&&n!=4&&n!=8)
+            throw std::invalid_argument("STRATA_QWEN35_MMVQ_ROWS must be 1,2,4,8");return n;}();
+    switch(rows){
+    case 2:rdna_launch_rows<F,NW,NC,2>(w,x,y,ni,no,s);break;
+    case 4:rdna_launch_rows<F,NW,NC,4>(w,x,y,ni,no,s);break;
+    case 8:rdna_launch_rows<F,NW,NC,8>(w,x,y,ni,no,s);break;
+    default:rdna_launch_rows<F,NW,NC,1>(w,x,y,ni,no,s);}
+}
+template<typename F,int NW> void rdna_launch(const void*w,const void*x,float*y,int ni,int no,int nc,cudaStream_t s){
+    switch(nc){
+#define STRATA_RDNA_CASE(N) case N: rdna_launch_n<F,NW,N>(w,x,y,ni,no,s);break
+    STRATA_RDNA_CASE(1);STRATA_RDNA_CASE(2);STRATA_RDNA_CASE(3);STRATA_RDNA_CASE(4);
+    STRATA_RDNA_CASE(5);STRATA_RDNA_CASE(6);STRATA_RDNA_CASE(7);STRATA_RDNA_CASE(8);
+#undef STRATA_RDNA_CASE
+    default:throw std::invalid_argument("RDNA3 MMVQ columns must be 1..8");}
+}
+}
+void native_mmvq_rdna3(int type,const void*w,const void*x,float*y,int ni,int no,int nc,void*stream){
+#if defined(STRATA_USE_HIP)
+    validate_shape(ni,nc,(type==8?32:256));validate_pointer(w);validate_pointer(x);validate_pointer(y);validate_stream(stream);
+    if(no<=0)throw std::invalid_argument("RDNA3 MMVQ rows must be positive");
+    auto s=static_cast<cudaStream_t>(stream);
+    // Pinned RDNA3_0 table: Q8_0 eight warps; K/IQ4_XS one warp; small-K disabled.
+    // Keep this opt-in so established Qwen4Exp graphs retain their arithmetic.
+    switch(type){
+    case 8:rdna_launch<SmallTraits<Q80Block,8>,8>(w,x,y,ni,no,nc,s);break;
+    case 12:rdna_launch<Q4KTraits,1>(w,x,y,ni,no,nc,s);break;
+    case 23:rdna_launch<IQ4XSTraits,1>(w,x,y,ni,no,nc,s);break;
+    default:throw std::invalid_argument("RDNA3 MMVQ supports Q8_0/Q4_K/IQ4_XS");}
+    launch_check();
+#else
+    native_mmvq(type,w,x,y,ni,no,nc,stream);
+#endif
 }
 
 } // namespace strata::kernels

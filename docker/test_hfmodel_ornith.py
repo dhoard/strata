@@ -76,11 +76,29 @@ class OrnithResolver(unittest.TestCase):
         self.assertIsNone(self.hf.mtp_path(self.cache, "IQ3_XXS"),
                           "the Qwen3.8 families have no external MTP draft in this table")
 
-    def test_unknown_single_file_falls_back_to_title_glob(self):
-        # A rename upstream: the table's exact name is absent, but the family title still finds the file.
-        want = put_snapshot(self.cache, "AtomicChat/Ornith-1.5-35B-A3B-GGUF", "rev",
+    def test_explicit_single_file_never_substitutes_another_quant(self):
+        put_snapshot(self.cache, "AtomicChat/Ornith-1.5-35B-A3B-GGUF", "rev",
                             "Ornith-1.5-35B-A3B-AD-Q4_K-IQ4_XS-renamed.gguf")
-        self.assertEqual(self.hf.shard_path(self.cache, "ornith", 1), want)
+        self.assertIsNone(self.hf.shard_path(self.cache, "ornith", 1))
+
+    def test_explicit_revision_never_falls_back(self):
+        put_snapshot(self.cache, "AtomicChat/Ornith-1.5-35B-A3B-GGUF", "rev",
+                     "Ornith-1.5-35B-A3B-AD-Q4_K-IQ4_XS.gguf")
+        self.assertIsNone(self.hf.shard_path(self.cache,"ornith",1,"other-revision"))
+
+    def test_explicit_branch_resolves_its_cached_ref(self):
+        repo = "AtomicChat/Ornith-1.5-35B-A3B-GGUF"
+        want = put_snapshot(self.cache, repo, "branch-commit",
+                            "Ornith-1.5-35B-A3B-AD-Q4_K-IQ4_XS.gguf")
+        rd = self.hf.repo_dir(self.cache, repo)
+        (rd / "refs" / "release").write_text("branch-commit")
+        self.assertEqual(self.hf.shard_path(self.cache, "ornith", 1, "release"), want)
+
+    def test_external_mtp_can_be_substituted(self):
+        from unittest.mock import patch
+        want = put_snapshot(self.cache,"test/compatible-mtp","custom-rev","draft.gguf")
+        with patch.dict("os.environ",{"STRATA_MTP_REPO":"test/compatible-mtp","STRATA_MTP_FILE":"draft.gguf"}):
+            self.assertEqual(self.hf.mtp_path(self.cache,"ornith"),want)
 
     def test_shell_output_names_mtp_and_file_count(self):
         import subprocess

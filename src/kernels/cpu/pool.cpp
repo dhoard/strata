@@ -545,11 +545,11 @@ void ExpertPool::drain(int id, ExpertScratch& scratch, uint32_t epoch) {
             const int qt = (int) i - quant_start_[qe];
             SplitBufMulti& sb = split_multi_[(size_t) qe];
             if (nfmt_ == nullptr) act_quant_q8_1(sb.ff[qt], FF, sb.a2[qt]);
-            else if (nfmt_->d_type == 42) act_quant_any(sb.ff[qt], FF, sb.a2[qt]);
+            else if (nfmt_->d_type == 42) act_quant_any(sb.ff[qt], (int)nfmt_->n_ff, sb.a2[qt]);
             else native_quant_h(*nfmt_, sb.ff[qt], sb.hq[qt]);
         } else if (mode_ >= 5) {
             // plan v0.3 P6: native layers, 5 = gate/up rows, 6 = down rows
-            const int per = mode_ == 5 ? FF : H;
+            const int per = mode_ == 5 ? (int)nfmt_->n_ff : (int)nfmt_->n_embd;
             const int64_t g0 = mrows_ * (int64_t) i / mtasks_, g1 = mrows_ * (int64_t) (i + 1) / mtasks_;
             for (int64_t r = g0; r < g1;) {
                 const int e = (int) (r / per), r0 = (int) (r % per);
@@ -675,7 +675,7 @@ void ExpertPool::run_quant(int n) {
         for (int t = 0; t < mjobs_[e].nt; ++t) {
             SplitBufMulti& sb = split_multi_[(size_t) e];
             if (nfmt_ == nullptr) act_quant_q8_1(sb.ff[t], FF, sb.a2[t]);
-            else if (nfmt_->d_type == 42) act_quant_any(sb.ff[t], FF, sb.a2[t]);
+            else if (nfmt_->d_type == 42) act_quant_any(sb.ff[t], (int)nfmt_->n_ff, sb.a2[t]);
             else native_quant_h(*nfmt_, sb.ff[t], sb.hq[t]);
         }
 }
@@ -719,6 +719,8 @@ void ExpertPool::run_split_multi(ExpertJobMulti* jobs, int n) {
 }
 
 void ExpertPool::run_split_multi_native(const NativeFmt& f, ExpertJobMulti* jobs, int n) {
+    if (f.n_ff <= 0 || f.n_ff > FF || f.n_embd <= 0 || f.n_embd > H || f.h_bytes > kNativeHBytes)
+        throw std::invalid_argument("native expert geometry exceeds pool scratch");
     if (n <= 0) return;
     const auto t0 = std::chrono::steady_clock::now();
     // more distinct experts than buffers: run them in batches
@@ -728,13 +730,13 @@ void ExpertPool::run_split_multi_native(const NativeFmt& f, ExpertJobMulti* jobs
         nfmt_ = &f;
         const int threads = n_ + (host_works_ ? 1 : 0);
         mtasks_ = 3 * threads;
-        mrows_ = (int64_t) nb * FF;
+        mrows_ = (int64_t) nb * f.n_ff;
         const auto a = std::chrono::steady_clock::now();
         run_phase(5, mtasks_);
         const auto b = std::chrono::steady_clock::now();
         run_quant(nb);
         const auto c = std::chrono::steady_clock::now();
-        mrows_ = (int64_t) nb * H;
+        mrows_ = (int64_t) nb * f.n_embd;
         run_phase(6, mtasks_);
         const auto d = std::chrono::steady_clock::now();
         ms_multi_gu += std::chrono::duration<double, std::milli>(b - a).count();

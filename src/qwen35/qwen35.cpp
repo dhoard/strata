@@ -500,7 +500,7 @@ void trunk_forward(const Qwen35Geometry& g, const TrunkWeights& w, TrunkState& s
     }
     rms_norm(x.data(), w.output_norm, H, g.rms_eps, xn.data());
     if (hidden) std::copy_n(xn.data(),H,hidden);
-    matvec(w.output, xn.data(), logits);
+    if (logits) matvec(w.output, xn.data(), logits);
     ++st.position;
     st.revisions.push_back(++st.next_revision);
 }

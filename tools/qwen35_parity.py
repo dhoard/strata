@@ -62,7 +62,8 @@ def main() -> int:
     base = tokenizer.encode(CODE)
     lengths = [int(n) for n in a.lengths.split(",")]
     a.out.mkdir(parents=True, exist_ok=True)
-    results = []
+    results_path = a.out / "results.json"
+    results = json.loads(results_path.read_text()) if results_path.exists() else []
     for length in lengths:
         if length <= 0:
             ap.error("lengths must be positive")
@@ -78,6 +79,7 @@ def main() -> int:
         for line in (a.out / f"{case}.log").read_text().splitlines():
             if line.startswith("logits "):
                 rows.append(dict(re.findall(r"([\w_]+)=([^ ]+)",line)))
+        results = [r for r in results if r["case"] != case]
         results.append({"case":case,"prompt_tokens":length,"greedy_steps":a.greedy,
                         "threads":a.threads,"returncode":status,"elapsed_seconds":time.monotonic()-started,
                         "logits":rows})

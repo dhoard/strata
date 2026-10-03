@@ -22,7 +22,7 @@ ARCH="gfx1101"                                    # this machine: RX 7700 XT
 BUILDER_BASE="rocm/dev-ubuntu-24.04:7.2.1-complete"
 RUNTIME_BASE="rocm/dev-ubuntu-24.04:7.2.1-complete"
 JOBS="$(nproc)"
-SKIP_COMPILE=0 RUNTIME_ONLY=0 BUILDER_ONLY=0 WITH_TESTS=0 DRY=0 NO_CACHE=""
+SKIP_COMPILE=0 RUNTIME_ONLY=0 BUILDER_ONLY=0 WITH_TESTS=0 DRY=0 NO_CACHE="" ORNITH_REFERENCE=0
 CCACHE_VOL="${STRATA_CCACHE_VOLUME:-}"            # default: strata-ccache-<arch>
 VERSION="$(sed -n 's/^[[:space:]]*project(strata VERSION \([0-9.]*\).*/\1/p' CMakeLists.txt 2>/dev/null | head -1)"
 VERSION="${VERSION:-dev}"                          # CMakeLists.txt:11 is the engine's source of truth
@@ -45,6 +45,7 @@ Options:
       --runtime-only     same as --skip-compile
       --builder-only     stop after the builder image
       --tests            after building, run the HIP CTest set on this GPU
+      --ornith-reference also build the independent pinned llama.cpp HIP reference
       --no-cache         docker build --no-cache
   -n, --dry-run          print the commands instead of running them
   -h, --help             this text
@@ -62,6 +63,7 @@ while [ $# -gt 0 ]; do
     --skip-compile|--runtime-only) SKIP_COMPILE=1; shift ;;
     --builder-only)   BUILDER_ONLY=1; shift ;;
     --tests)          WITH_TESTS=1; shift ;;
+    --ornith-reference) ORNITH_REFERENCE=1; shift ;;
     --no-cache)       NO_CACHE="--no-cache"; shift ;;
     -n|--dry-run)     DRY=1; shift ;;
     -h|--help)        usage; exit 0 ;;
@@ -141,12 +143,16 @@ else
   xrun "$DOCKER" run --rm --name "strata-build-${ARCH}" \
        -v "$ROOT":/src -v "$CCACHE_VOL":/ccache \
        -e JOBS="$JOBS" -e CMAKE_TESTS=1 \
+       -e STRATA_ORNITH_REFERENCE="$ORNITH_REFERENCE" \
        -e CHOWN_UID="$(id -u)" -e CHOWN_GID="$(id -g)" \
        --ulimit memlock=-1:-1 \
        --entrypoint bash "$BUILDER_IMAGE" -lc '
          set -e
          /usr/local/bin/build-engine.sh '"$ARCH"'
-         if [ "${CHOWN_UID:-0}" != "0" ]; then chown -R "${CHOWN_UID}:${CHOWN_GID}" /src/build-hip; fi'
+         if [ "${CHOWN_UID:-0}" != "0" ]; then
+           chown -R "${CHOWN_UID}:${CHOWN_GID}" /src/build-hip
+           [ ! -d /src/build-ornith-reference ] || chown -R "${CHOWN_UID}:${CHOWN_GID}" /src/build-ornith-reference
+         fi'
 fi
 if [ "$DRY" != 1 ]; then
   [ -x "$ENGINE" ] || die "the compile produced no $ENGINE - see the compiler output above"

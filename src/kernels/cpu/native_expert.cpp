@@ -12,6 +12,9 @@
 #include "ggml-cpu.h"
 
 #include <cmath>
+#include <array>
+#include <algorithm>
+#include <stdexcept>
 #include <cstdlib>
 #include <mutex>
 
@@ -78,6 +81,25 @@ void native_quant_h(const NativeFmt& f, const float* h, void* dst) {
 
 void native_gu_rows(const NativeFmt& f, const uint8_t* blob, const void* const* act, int nt, float* const* ff,
                     int r0, int r1) {
+    if (f.swiglu) {
+        if (r0 < 0 || r1 < r0 || r1 > f.n_ff || r1-r0 > 1024)
+            throw std::invalid_argument("native vector SwiGLU row span exceeds scratch");
+        const auto dot = traits(f.gu_type)->vec_dot;
+        // Preserve the full-row SIMD activation contract even when the pool divides a row
+        // at an arbitrary column. Compute the containing 16-wide tiles into private scratch;
+        // only copy this task's rows, so expanded tiles never race neighboring workers.
+        const int begin = (r0/16)*16, end = std::min<int>((int)f.n_ff,((r1+15)/16)*16);
+        std::array<float,1024> gate, up, activation;
+        for (int t=0;t<nt;++t) {
+            for (int r=begin;r<end;++r) {
+                dot((int) f.n_embd,&gate[(size_t) (r-begin)],0,blob+(size_t) r*f.gu_row,0,act[t],0,1);
+                dot((int) f.n_embd,&up[(size_t) (r-begin)],0,blob+f.up_off+(size_t) r*f.gu_row,0,act[t],0,1);
+            }
+            f.swiglu(end-begin,activation.data(),gate.data(),up.data());
+            std::copy_n(activation.data()+r0-begin,r1-r0,ff[t]+r0);
+        }
+        return;
+    }
     // the multi-token kernels decode the weights once for all tokens: 2.0-2.4x ggml-cpu at three tokens, no faster
     // at one (all are bound by the codebook lookups, ~5 GB/s per core), measured by native_expert_parity.  AVX-512
     // first, then the AVX-2 one (Zen 2/3, Intel 12th-14th gen).  STRATA_NO_IQ512 drops an AVX-512 CPU to the

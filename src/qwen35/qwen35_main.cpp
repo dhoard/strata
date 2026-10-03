@@ -14,6 +14,7 @@
 // and run3.sh need no change to drive this binary.  Sampling keys the server sends are honoured where they are
 // implemented and ignored otherwise.
 #include "strata/qwen35/session.hpp"
+#include "strata/qwen35/gpu.hpp"
 
 #include <algorithm>
 #include <atomic>
@@ -211,7 +212,7 @@ int main(int argc, char** argv) {
     try {
         std::string path, mtp_path; std::vector<int64_t> tokens;
         int64_t max_new = 8, context = 0; int spec = 0, workers = 0, force_reject = -1;
-        bool check = false, serve = false;
+        bool check = false, serve = false, gpu = false, fit_report = false; q::GpuOptions gpu_options;
         for (int i=1;i<argc;++i) {
             const std::string arg = argv[i];
             const auto next = [&]() -> std::string {
@@ -224,14 +225,28 @@ int main(int argc, char** argv) {
             else if (arg == "--max-context") context = integer(next());
             else if (arg == "--spec") spec = (int) integer(next());
             else if (arg == "--pool-workers") workers = (int) integer(next());
+            else if (arg == "--prefill") gpu_options.prefill = (int) integer(next());
             else if (arg == "--force-reject") force_reject = (int) integer(next());
+            else if (arg == "--gpu") gpu = true;
+            else if (arg == "--profile") gpu_options.profile = true;
+            else if (arg == "--cpu") gpu = false;
+            else if (arg == "--fit-report") fit_report = true;
+            else if (arg == "--kv") { gpu_options.kv = next();
+                if (gpu_options.kv != "f32" && gpu_options.kv != "f16")
+                    throw std::invalid_argument("--kv must be f32 or f16 (the resident KV layouts this "
+                                                "backend implements and has parity for)"); }
+            else if (arg == "--expert-cache") { auto v=next(); gpu_options.expert_slots = v=="auto" ? -1 : integer(v); }
             else if (arg == "--serve") serve = true;
             else if (arg == "--check") check = true;
-            else if (arg == "--capabilities") { std::puts("qwen35moe mtp greedy-spec cancellation"); return 0; }
+            else if (arg == "--capabilities") {
+                // What this build can serve, and on which tiers. run3.sh refuses before the download when
+                // `qwen35moe` is missing; `gpu` is absent in a build without a GPU backend.
+                std::puts("qwen35moe mtp greedy-spec cancellation cpu gpu"); return 0;
+            }
             else throw std::invalid_argument("unknown option: "+arg);
         }
         if (path.empty()) throw std::invalid_argument("--model is required");
-        if (context < 0 || max_new < 0 || spec < 0 || spec > 4 || workers < 0 || workers > 256 || force_reject < -1 || force_reject > 4)
+        if (context < 0 || max_new < 0 || spec < 0 || spec > 4 || workers < 0 || workers > 256 || force_reject < -1 || force_reject > 4 || gpu_options.prefill < 1 || gpu_options.prefill > 4096)
             throw std::invalid_argument("invalid context/output/spec/worker/rejection setting");
         if (spec && mtp_path.empty()) throw std::invalid_argument("--spec requires a trained external --mtp GGUF");
 #ifdef _OPENMP
@@ -247,7 +262,58 @@ int main(int argc, char** argv) {
                      (long long) g.n_layers,(long long) g.n_embd,(long long) g.n_expert,(long long) g.n_expert_used,
                      (long long) context,mtp_path.empty() ? "absent" : "loaded",spec);
         if (check) { std::puts("check ok"); return 0; }
-        q::CpuSession session(g,w,spec ? &mtp : nullptr,context);
+        gpu_options.workers = workers;
+        gpu_options.spec = spec;
+        if (fit_report) {
+            // Predicts the resident tier's VRAM before it is built, so the launcher can refuse a context/KV/slot
+            // combination that cannot fit instead of failing after the model is loaded. Allocation-free.
+            if (!gpu) throw std::invalid_argument("--fit-report describes the GPU tier; pass --gpu with it");
+            const q::GpuMemoryPlan plan = q::qwen35_gpu_plan(g, w, spec ? &mtp : nullptr, context, gpu_options.kv, spec);
+            uint64_t free_bytes = 0;
+            if (!q::gpu_free_bytes(free_bytes, err)) throw std::runtime_error("device memory query: " + err);
+            const double GiB = 1073741824.0, MiB = 1048576.0;
+            // The session sizes its expert cache from the bytes still free *after* its own allocations, so the
+            // report takes the fixed tiers off the free bytes before asking what fits.
+            const uint64_t free_for_cache = free_bytes > plan.fixed() ? free_bytes - plan.fixed() : 0;
+            const int64_t capacity = q::gpu_expert_slot_capacity(plan, free_for_cache);
+            const int64_t want = gpu_options.expert_slots < 0 ? capacity : gpu_options.expert_slots;
+            std::printf("qwen35 fit: tier=gpu context=%lld kv=%s mtp=%s\n", (long long) context,
+                        gpu_options.kv.c_str(), spec ? "yes" : "no");
+            std::printf("qwen35 fit: dense=%.3f GiB gdn_state=%.3f GiB kv_cache=%.3f GiB scratch=%.3f GiB\n",
+                        double(plan.dense)/GiB, double(plan.state)/GiB, double(plan.kv)/GiB,
+                        double(plan.scratch)/GiB);
+            std::printf("qwen35 fit: fixed=%.3f GiB; device free=%.3f GiB (budget, runtime reserve and slack "
+                        "already removed)\n", double(plan.fixed())/GiB, double(free_bytes)/GiB);
+            std::printf("qwen35 fit: expert blob=%.2f MiB, slots requested=%lld slots that fit=%lld of %lld "
+                        "expert pairs\n", double(plan.expert_blob)/MiB, (long long) want, (long long) capacity,
+                        (long long) plan.n_expert_pairs);
+            if (plan.fixed() > free_bytes) {
+                std::printf("qwen35 fit: DOES NOT FIT - the dense weights, state and KV alone need %.3f GiB "
+                            "and %.3f GiB is free. Lower --max-context or use --kv f16; nothing is reduced "
+                            "silently.\n", double(plan.fixed())/GiB, double(free_bytes)/GiB);
+                return 1;
+            }
+            if (want > capacity) {
+                std::printf("qwen35 fit: DOES NOT FIT - %lld expert slots need %.3f GiB of the %.3f GiB free "
+                            "after the fixed %.3f GiB. Ask for <= %lld slots (--expert-cache) or lower the "
+                            "context.\n", (long long) want,
+                        double(uint64_t(want)*plan.expert_blob)/GiB, double(free_bytes-plan.fixed())/GiB,
+                        double(plan.fixed())/GiB, (long long) capacity);
+                return 1;
+            }
+            std::printf("qwen35 fit: FITS - total %.3f GiB of %.3f GiB with %lld expert slots\n",
+                        double(plan.with_slots(want))/GiB, double(free_bytes)/GiB, (long long) want);
+            return 0;
+        }
+        std::unique_ptr<q::InferenceSession> owned;
+        std::fprintf(stderr, "qwen35 backend=%s kv=%s expert_cache=%s pool_workers=%s context=%lld\n",
+                     gpu ? "gpu (dense+attention on card, experts split VRAM/CPU)" : "cpu (all layers on "
+                     "CPU through ggml-cpu)", gpu_options.kv.c_str(),
+                     gpu_options.expert_slots < 0 ? "auto" : std::to_string(gpu_options.expert_slots).c_str(),
+                     workers == 0 ? "auto" : std::to_string(workers).c_str(), (long long) context);
+        if (gpu) owned = q::make_gpu_session(g,w,spec ? &mtp : nullptr,context,gpu_options);
+        else owned = std::make_unique<q::CpuSession>(g,w,spec ? &mtp : nullptr,context);
+        auto& session = *owned;
         if (serve) return run_serve(session,g,w.eos_token,spec);
         Sampling sampling; std::mt19937_64 rng(0);
         const auto result = q::generate(session,g,w.eos_token,tokens,max_new,spec,

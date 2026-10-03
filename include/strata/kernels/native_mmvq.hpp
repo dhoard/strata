@@ -109,4 +109,9 @@ std::size_t native_mmvq_weight_bytes(int ggml_type, int n_in, int n_out);
 void native_mmvq(int ggml_type, const void* weights, const void* x_q8_1, float* y,
                  int n_in, int n_out, int ncols, void* stream);
 
+// Opt-in pinned RDNA3 reduction layout; identical per-column layout for verification.
+// Q8_0/Q4_K/IQ4_XS on gfx1100/gfx1101, ordinary native dispatch on CUDA.
+void native_mmvq_rdna3(int type, const void* weights, const void* x_q8_1, float* y,
+                        int n_in, int n_out, int ncols, void* stream);
+
 } // namespace strata::kernels

@@ -28,10 +28,20 @@ void native_gdn_beta_gate(float* beta, int64_t heads, void* stream);
 void native_gdn_gate(const float* alpha, const float* dt, const float* ssm_a,
                      float* gate, int64_t heads, void* stream);
 
+// Pinned Qwen35 softplus rounds 1+exp before log; preserves the original gate entry point.
+void native_gdn_gate_qwen35(const float* alpha, const float* dt, const float* ssm_a,
+                            float* gate, int64_t heads, void* stream);
+
 // [heads,128]: rms_norm(output,epsilon)*gamma*sigmoid(z). Gamma contains only
 // 128 floats and broadcasts across heads. Destination is disjoint from inputs.
 void native_gdn_out_norm(const float* output, const float* z, const float* gamma,
                          float* destination, int64_t heads, int64_t cols,
                          float epsilon, void* stream);
+
+// Qwen3.5/3.6 uses SiLU(z), unlike Qwen4Exp's sigmoid(z). Keep the entry points
+// distinct so selecting the new architecture cannot change existing GDN semantics.
+void native_gdn_out_norm_silu(const float* output, const float* z, const float* gamma,
+                              float* destination, int64_t heads, int64_t cols,
+                              float epsilon, void* stream);
 
 } // namespace strata::kernels

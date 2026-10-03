@@ -280,7 +280,9 @@ class WindowsDetection(unittest.TestCase):
             ver = ".".join(map(str, setup.WIN_HIP_MIN_ENGINE))
             good = {"source": "prebuilt", "backend": "hip", "version": ver, "archs": ["gfx1100", "gfx1201"],
                     "lib_dirs": ["rocm/bin"]}
-            with mock.patch.object(setup, "ROOT", root), mock.patch.object(setup, "say", lambda *a, **k: None), \
+            # This fixture contains Windows filenames even when the test host is Linux.
+            with mock.patch.object(setup, "ROOT", root), mock.patch.object(setup, "EXE", "strata.exe"), \
+                    mock.patch.object(setup, "say", lambda *a, **k: None), \
                     mock.patch.object(setup, "ok", lambda *a: None), mock.patch.object(setup, "warn", lambda *a: None):
                 publish({**good, "archs": ["gfx1100"]})
                 self.assertIsNone(setup.get_prebuilt_hip(str(pub) + "/", {"arch": "gfx1201"}))

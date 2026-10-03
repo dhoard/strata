@@ -47,7 +47,7 @@ COPY data/            ./data/
 COPY tools/           ./tools/
 COPY chat.py          ./
 COPY docker/entrypoint-hip.sh docker/entrypoint-ornith.sh docker/bootstrap-model.sh ./docker/
-COPY docker/hipinfo.py docker/vram-guard.py docker/hfmodel.py ./docker/
+COPY docker/hipinfo.py docker/vram-guard.py docker/hfmodel.py docker/ornith_fetch.py ./docker/
 
 COPY --from=engine  strata  /usr/local/bin/strata
 COPY --from=engine  strata-device /usr/local/bin/strata-device

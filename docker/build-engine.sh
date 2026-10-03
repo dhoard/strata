@@ -86,6 +86,18 @@ cmake --build "$BUILD" -j "$JOBS" || {
 }
 
 # ---------------------------------------------------------------- report
+if [ "${STRATA_ORNITH_REFERENCE:-0}" = 1 ]; then
+  # A separate upstream HIP build keeps the numerical oracle independent of Strata's kernels.
+  # All compilation still runs through ./build.sh and this Docker toolchain.
+  REF_SOURCE="$BUILD/_deps/strata_llamacpp-src"
+  REF_BUILD="$SRC/build-ornith-reference"
+  cmake -G Ninja -S "$SRC/tests/ornith-reference" -B "$REF_BUILD" \
+    -DCMAKE_BUILD_TYPE=Release -DCMAKE_HIP_ARCHITECTURES="$ARCH" \
+    -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DCMAKE_HIP_COMPILER_LAUNCHER=ccache \
+    -DORNITH_LLAMA_SOURCE="$REF_SOURCE"
+  cmake --build "$REF_BUILD" -j "$JOBS"
+fi
+
 [ -x "$BUILD/strata" ] || die "the build finished but $BUILD/strata is not there"
 for t in strata-device hip_intrinsics hip_expert_cache_staging; do
   [ -x "$BUILD/$t" ] && log "artifact: $t"

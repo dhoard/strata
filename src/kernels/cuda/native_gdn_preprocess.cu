@@ -87,15 +87,17 @@ __global__ void beta_sigmoid(float* beta, int count) {
     const int i = blockIdx.x * blockDim.x + threadIdx.x;
     if (i < count) beta[i] = sigmoid(beta[i]);
 }
+template<bool AccurateSmall>
 __global__ void gate_softplus(const float* __restrict__ alpha, const float* __restrict__ dt,
                                const float* __restrict__ ssm_a, float* __restrict__ gate, int count) {
     const int i = blockIdx.x * blockDim.x + threadIdx.x;
     if (i >= count) return;
     const float value = __fadd_rn(alpha[i], dt[i]);
-    const float softplus = value > 20.0f ? value : log1pf(expf(value));   // 1 + e^v loses e^v below ~1e-7
+    const float softplus = value > 20.0f ? value : (AccurateSmall ? log1pf(expf(value)) : logf(1.0f+expf(value)));
     gate[i] = softplus * ssm_a[i];
 }
 
+template<bool Silu>
 __global__ void out_norm(const float* __restrict__ input, const float* __restrict__ z,
                           const float* __restrict__ gamma, float* __restrict__ output, float epsilon) {
     const int col = threadIdx.x;
@@ -109,7 +111,8 @@ __global__ void out_norm(const float* __restrict__ input, const float* __restric
     if (col < S) {
         // RMSNorm+gamma is one pinned fused operator, followed by sigmoid*mul.
         const float weighted = __fmul_rn(__fmul_rn(scale, value), gamma[col]);
-        output[offset + col] = weighted * sigmoid(z[offset + col]);
+        const float gate = sigmoid(z[offset + col]);
+        output[offset + col] = weighted * (Silu ? z[offset + col]/(1.0f+expf(-z[offset + col])) : gate);
     }
 }
 
@@ -179,10 +182,19 @@ void native_gdn_gate(const float* alpha, const float* dt, const float* ssm_a,
         valid(input);
         disjoint(output, input);
     }
-    gate_softplus<<<unsigned((heads + 255) / 256), 256, 0, static_cast<cudaStream_t>(stream)>>>(alpha, dt, ssm_a, gate, int(heads));
+    gate_softplus<true><<<unsigned((heads + 255) / 256), 256, 0, static_cast<cudaStream_t>(stream)>>>(alpha, dt, ssm_a, gate, int(heads));
     check_launch();
 }
-void native_gdn_out_norm(const float* output, const float* z, const float* gamma,
+void native_gdn_gate_qwen35(const float* alpha, const float* dt, const float* ssm_a,
+                            float* gate, int64_t heads, void* stream) {
+    count_and_stream(heads,stream); const size_t bytes=size_t(heads)*sizeof(float);
+    const Span output{gate,bytes}; valid(output);
+    for(auto input:{Span{alpha,bytes},Span{dt,bytes},Span{ssm_a,bytes}}){valid(input);disjoint(output,input);}
+    gate_softplus<false><<<unsigned((heads+255)/256),256,0,static_cast<cudaStream_t>(stream)>>>(alpha,dt,ssm_a,gate,int(heads));
+    check_launch();
+}
+template<bool Silu>
+void out_norm_checked(const float* output, const float* z, const float* gamma,
                          float* destination, int64_t heads, int64_t cols,
                          float epsilon, void* stream) {
     norm_geometry(heads, cols, epsilon, stream);
@@ -193,7 +205,15 @@ void native_gdn_out_norm(const float* output, const float* z, const float* gamma
         valid(input);
         disjoint(writable, input);
     }
-    out_norm<<<unsigned(heads), 256, 0, static_cast<cudaStream_t>(stream)>>>(output, z, gamma, destination, epsilon);
+    out_norm<Silu><<<unsigned(heads), 256, 0, static_cast<cudaStream_t>(stream)>>>(output, z, gamma, destination, epsilon);
     check_launch();
+}
+void native_gdn_out_norm(const float* output, const float* z, const float* gamma,
+                         float* destination, int64_t heads, int64_t cols, float epsilon, void* stream) {
+    out_norm_checked<false>(output,z,gamma,destination,heads,cols,epsilon,stream);
+}
+void native_gdn_out_norm_silu(const float* output, const float* z, const float* gamma,
+                              float* destination, int64_t heads, int64_t cols, float epsilon, void* stream) {
+    out_norm_checked<true>(output,z,gamma,destination,heads,cols,epsilon,stream);
 }
 } // namespace strata::kernels

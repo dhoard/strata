@@ -55,12 +55,21 @@ GenerationStats generate(InferenceSession& s, const Qwen35Geometry& g, int64_t e
     std::vector<float> logits((size_t) g.n_vocab), h((size_t) g.n_embd), prev((size_t) g.n_embd,0.0f);
     std::vector<float> dh((size_t) g.n_embd), dl((size_t) g.n_vocab);
     const auto p0 = Clock::now();
-    for (auto token : prompt) {
+    for (size_t i = 0; i < prompt.size();) {
         if (cancelled()) { result.finish = "stop"; break; }
-        s.target(token,logits.data(),h.data());
-        if (s.has_mtp() && spec) s.draft(token,prev.data(),nullptr,dh.data());
-        prev = h;
+        const int count = int(std::min<size_t>(s.prefill_batch_size(), prompt.size()-i));
+        std::vector<float> hs(size_t(count)*g.n_embd);
+        std::vector<float*> lp(count, nullptr), hp(count);
+        for (int j=0;j<count;++j) hp[j] = hs.data()+size_t(j)*g.n_embd;
+        if (i+count == prompt.size()) lp.back() = logits.data();
+        s.target_batch(prompt.data()+i,count,lp.data(),hp.data());
+        for (int j=0;j<count;++j) {
+            if (s.has_mtp() && spec) s.draft(prompt[i+j],prev.data(),nullptr,dh.data());
+            std::copy_n(hp[j],g.n_embd,prev.data());
+        }
+        h = prev; i += count;
     }
+    s.begin_decode();
     const auto d0 = Clock::now(); result.prompt_ms = ms(p0,d0);
     while (!cancelled() && result.generated < max_new && s.position() < s.context()) {
         const int64_t first = select(logits);
@@ -84,7 +93,9 @@ GenerationStats generate(InferenceSession& s, const Qwen35Geometry& g, int64_t e
         std::vector<std::vector<float>> vl((size_t) k+1,std::vector<float>((size_t) g.n_vocab));
         std::vector<std::vector<float>> vh((size_t) k+1,std::vector<float>((size_t) g.n_embd));
         const auto verify_start = Clock::now(); s.begin_verify();
-        for (int i=0;i<=k;++i) s.target(proposals[(size_t) i],vl[(size_t) i].data(),vh[(size_t) i].data());
+        std::vector<float*> lp(k+1), hp(k+1);
+        for (int i=0;i<=k;++i) { lp[i]=vl[i].data(); hp[i]=vh[i].data(); }
+        s.target_batch(proposals.data(),k+1,lp.data(),hp.data());
         int commit = 1;
         while (commit <= k && proposals[(size_t) commit] != eos &&
                proposals[(size_t) commit] == greedy(vl[(size_t) commit-1]) &&

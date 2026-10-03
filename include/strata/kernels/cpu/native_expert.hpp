@@ -27,6 +27,9 @@ struct NativeFmt {
     size_t up_off = 0, down_off = 0;    ///< inside the blob
     size_t bytes = 0;                   ///< the whole blob
     size_t act_bytes = 0, h_bytes = 0;  ///< quantized activation sizes (n_embd of gu_act, n_ff of d_act)
+    // Optional vector activation contract. Null preserves the original scalar SiLU. A backend
+    // comparing against GGML CPU can request its SIMD SwiGLU rounding without changing Qwen4Exp.
+    void (*swiglu)(int, float*, const float*, const float*) = nullptr;
 };
 
 /// Whether this build has the ggml-cpu path.
