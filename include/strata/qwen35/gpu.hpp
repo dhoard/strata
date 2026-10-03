@@ -9,6 +9,12 @@ struct GpuOptions {
     bool profile = false;
     int prefill = 8; // Native MMVQ tiles, at most eight causal tokens per layer pass.
     int spec = 4; // Maximum draft window; allocate only spec+2 recurrent checkpoints with MTP.
+    // Keep the conversation cache: a recurrent-state checkpoint at the end of each prompt plus a few
+    // periodic ones inside it, so a request that extends the conversation reads only the new tail (a chat
+    // template diverges at the previous prompt's very end, which is what the periodic points are for).
+    // Each checkpoint costs one state copy of VRAM (61 MiB for Ornith's 30 GDN layers).
+    bool prompt_cache = true;
+    int prompt_cache_slots = 4;   // periodic resume points; a resumed turn re-reads <= 1/slots of the prompt
 };
 std::unique_ptr<InferenceSession> make_gpu_session(const Qwen35Geometry &, const TrunkWeights &,
                                                    const MtpWeights *, int64_t context, const GpuOptions &);
@@ -28,7 +34,8 @@ struct GpuMemoryPlan {
     uint64_t with_slots(int64_t slots) const { return fixed() + uint64_t(slots) * expert_blob; }
 };
 GpuMemoryPlan qwen35_gpu_plan(const Qwen35Geometry &, const TrunkWeights &, const MtpWeights *,
-                              int64_t context, const std::string &kv, int spec = 4);
+                              int64_t context, const std::string &kv, int spec = 4,
+                              bool prompt_cache = true, int prompt_cache_slots = 4);
 // Device bytes still available to Strata: the HIP allocation guard's own view (budget, runtime reserve and
 // slack already removed), which is what an allocation is actually admitted against.
 bool gpu_free_bytes(uint64_t &free_bytes, std::string &err);

@@ -123,6 +123,11 @@ import json, os
 e = os.environ
 args = ["--serve", "--model", e["NATIVE"], "--max-context", e["MAX_CONTEXT"], "--pool-workers", e["POOL_WORKERS"],
         "--kv", e["KV"], "--expert-cache", e["EXPERT_CACHE"], "--prefill", e["PREFILL"], "--" + e["TIER"]]
+# The prompt cache is on by default; these pass a launcher's override through (see docs/ORNITH_QWEN35MOE.md).
+if e.get("PROMPT_CACHE"):
+    args += ["--prompt-cache", e["PROMPT_CACHE"]]
+if e.get("PROMPT_CACHE_SLOTS"):
+    args += ["--prompt-cache-slots", e["PROMPT_CACHE_SLOTS"]]
 if e["MTP_GGUF"]:
     args += ["--mtp", e["MTP_GGUF"], "--spec", e["SPEC"]]
 cfg = {"exe": os.environ.get("STRATA_EXE", "/usr/local/bin/strata-qwen35"), "args": args,

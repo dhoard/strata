@@ -1,0 +1,8 @@
+<|im_start|>user
+Write a C++17 function `bool same_tree(const Node* a, const Node* b)` that returns true when two binary trees hold equal values in the same shape. Include the struct and the function. Then write one unit test for it.<|im_end|>
+<|im_start|>assistant
+<think>
+
+</think>
+
+

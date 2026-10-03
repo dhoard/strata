@@ -21,12 +21,68 @@ records the model, the architecture, the artifacts, what is implemented and veri
 | External Qwen3.6 MTP backend and greedy speculative rollback | done; batched verification and exact rollback; spec 1 measures **50.0 vs 52.0 tok/s** target-only, so spec defaults to 0 |
 | VRAM fit report (`strata-qwen35 --fit-report`), run by the container before it serves | done; predicts the session's own allocation exactly (planned 8.482 GiB = allocated 8.482 GiB) |
 | Chunked prefill and multi-token verification (one pass over the weights for several tokens) | done, 8-token causal tiles; full logits/hidden/state and all rollback prefixes bitwise equal to single-token execution |
+| Prompt cache: recurrent-state checkpoints so a turn reads only its new tail, not the whole conversation | done, measured **39.7 s -> 2.9 s** for a 2K-token agentic turn; bitwise equal to a full read |
 
 `./run3.sh` runs the GPU/CPU split by default, the same contract `run.sh` and `run2.sh` use: whatever fits
 stays on the card, and the routed expert set that does not fit is streamed from system RAM. The latest warmed code measurement is 52.0 tok/s, within the lower end of the 50-70 target. This is
 **decode throughput with 131072 KV capacity**, not a filled 128K prompt benchmark. Prefill, cache placement,
 and server overhead are reported separately. Trained MTP is available through `--spec`; it is slower on
 this workload and is not the default.
+
+## Prompt cache
+
+Ornith's GDN layers are a recurrence: state cannot be rewound token by token, so before this work every
+request started with `reset()` and **re-read its whole prompt**, at roughly 50 tok/s. That is what made an
+agentic client feel slow - amanda's turns carry ~2,000 prompt tokens (system prompt, `AGENTS.md`, tool
+schemas, transcript) and paid ~40 s of prompt processing on *every* turn, while a short web chat paid ~1 s.
+The cache keeps recurrent-state checkpoints so a turn reads only what is new:
+
+- one checkpoint at the end of each prompt, with the logits it produced - an identical repeat (a retry)
+  then reads **nothing at all**;
+- `--prompt-cache-slots N` (default 4) periodic checkpoints inside the prompt, spaced `prompt/slots`
+  apart, which bound what a resumed turn re-reads to about `1/slots` of the prompt.
+
+The periodic points are not an optimisation detail, they are what makes the cache work at all. Qwen's own
+chat template re-renders a past assistant turn from its content, without the `<think>` scaffold that its
+generation prompt ended with, so the next turn's prompt diverges **at the very end of the previous one**:
+an end-of-prompt checkpoint sits inside that divergence and can never be reused. (This is why the same
+problem exists for Mamba/RWKV models in other engines, which also keep periodic state checkpoints.)
+
+Measured on gfx1101 through `./run3.sh`, `reasoning_effort=none`, f16 KV, 131072 capacity, auto expert
+cache, one conversation whose first prompt is 2,020 tokens (the same three-file prompt a coding agent
+sends):
+
+| turn | prompt tokens | prompt tokens reused | wall | engine prompt processing |
+|---|---|---|---|---|
+| 1 (cold) | 2020 | 0 | 35.6 s | 34.8 s |
+| 2 | 2035 | 1536 | 9.1 s | 8.7 s |
+| 3 | 2050 | 1920 | 2.9 s | 2.8 s |
+| 4 | 2069 | 1944 | 2.9 s | 2.8 s |
+| 5 | 2085 | 2040 | 1.3 s | 1.2 s |
+| 6 | 2101 | 2072 | 0.9 s | 0.9 s |
+| 6 again | 2117 | 2096 | 0.8 s | 0.7 s |
+
+The first turn still reads everything (there is nothing cached yet); from the third turn on a turn costs
+about a second instead of forty. The server reports the reuse as OpenAI's `usage.prompt_tokens_details.cached_tokens`,
+and `strata-qwen35 --serve` prints it as the 9th `DONE` field.
+
+What it costs and what it does not do:
+
+- **VRAM**: one state copy per checkpoint, 61 MiB each on this model (30 GDN layers), so `1 + slots` =
+  **305 MiB** at the default. It comes out of the expert cache: 2278 slots instead of 2472 in the
+  measured session. `--prompt-cache-slots 0` keeps only the end-of-prompt checkpoint; `--prompt-cache 0`
+  disables the cache entirely (a full read per request, the pre-cache behaviour), which is what the parity
+  tools use.
+- **Correctness**: a resumed turn's logits and greedy tokens are **bitwise** a full read's. The periodic
+  resume is exercised on the real artifact at f32 and f16 KV (`qwen35_batch_session_test`) and on a
+  synthetic trunk (`qwen35_layers_test`), both against a session with the cache off.
+- **Not a KV cache in RAM**: the checkpoints hold recurrent state and KV cursors, not the conversation's
+  K/V storage; the attention KV stays in VRAM as before.
+- A prompt that diverges *before* every checkpoint (a client that rewrites its history, or a different
+  conversation arriving at the server) is still a full read. The engine's
+  `STRATA_QWEN35_CACHE_DEBUG=1` prints the decision per request (`count`, `checkpoint`, shared `prefix`,
+  `resume`).
+
 
 ## The model
 
@@ -131,6 +187,7 @@ model's expert geometry, and the CMake tests are now registered for HIP as well 
 ./run3.sh --dry-run
 ./run3.sh --max-context 131072      # default; 262144 also accepted
 ./run3.sh --spec 4 --expert-cache auto --pool-workers 10
+./run3.sh --env STRATA_PROMPT_CACHE=0        # no conversation cache (a full read per request)
 ```
 
 It uses the same 10 GiB VRAM contract as `run.sh`/`run2.sh`, a distinct container name
@@ -302,7 +359,9 @@ refused - "the dense weights, state and KV alone need 12.059 GiB and 8.750 GiB i
 
 ## Remaining work
 
-- Larger MMQ prefill tiles beyond the native eight-token path, and long-context prefill optimization.
+- Larger MMQ prefill tiles beyond the native eight-token path, and long-context prefill optimization. The
+  prompt cache removes the *repeat* cost of a long prompt, but a cold turn still reads its whole prompt at
+  ~50 tok/s.
 - Filled 128K/262K needle and quality runs. Capacity 131072 fits and runs in the shipping configuration;
   262144 is an explicit request subject to the memory fit gate, not a completed long-context quality claim.
 - Broader code, repository, JSON and prose reference sweeps at large filled contexts, and KV-quality sweeps.

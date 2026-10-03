@@ -1,0 +1,8 @@
+[
+  {
+    "length": 4096,
+    "file": "context-4096-tokens.json",
+    "sha256": "8aa75c7871ae30d6",
+    "first_tokens": "\n\n=== src/core/concurrent_main.cpp ===\n// src/core/concurrent_main.cpp - do the "
+  }
+]

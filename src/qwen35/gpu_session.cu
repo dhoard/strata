@@ -17,6 +17,7 @@
 #include <cuda_runtime.h>
 #include <map>
 #include <stdexcept>
+#include <cstdlib>
 #include <unordered_map>
 namespace strata::qwen35 {
 namespace k = strata::kernels;
@@ -189,6 +190,12 @@ class GpuSession final : public InferenceSession {
     bool verifying_ = false, placement_frozen_ = false;
     std::vector<int64_t> checkpos_;
     size_t snapshot_bytes_ = 0;
+    // Prompt cache: the tokens this session has consumed, the state at the end of the last prompt, and a
+    // ring of periodic resume points.  The slots sit above the verification ones (0..spec+1).
+    PromptCacheState prompt_cache_state_;
+    std::vector<int64_t> periodic_;          // positions of the ring, oldest first
+    std::vector<int64_t> periodic_slots_;    // their snapshot slots, in the same order
+    int64_t prompt_end_slot_ = 0, periodic_writes_ = 0, next_periodic_ = 0;
     float *host_ = nullptr;
     int *host_ids_ = nullptr;
     float *cpu_parts_ = nullptr;
@@ -805,9 +812,20 @@ class GpuSession final : public InferenceSession {
             draft_enorm_ = upnorm(mtp->enorm, H);
             draft_hnorm_ = upnorm(mtp->hnorm, H);
             draft_head_norm_ = upnorm(mtp->head_norm, H);
-            snapshot_.alloc(snapshot_bytes_ * (opt_.spec + 2));
         }
-        const GpuMemoryPlan plan = qwen35_gpu_plan(g, w, mtp, ctx, opt_.kv, opt_.spec);
+        // State checkpoints: spec+2 for verification when a draft is loaded, one for the end of the last
+        // prompt, and `prompt_cache_slots` periodic ones (a chat template diverges at the previous
+        // prompt's end, so periodic points are what make a resume possible).  The slot indices and the
+        // allocation are both derived from the *effective* verification count, so a session built without
+        // a draft cannot reserve draft-sized snapshot space; qwen35_gpu_plan() adds the same number of
+        // state copies, which is what the drift check below compares.
+        const int64_t verification_slots = mtp ? opt_.spec + 2 : 0;
+        prompt_end_slot_ = verification_slots;
+        const int64_t periodic_slots = opt_.prompt_cache ? std::max(0, opt_.prompt_cache_slots) : 0;
+        if (snapshot_bytes_)
+            snapshot_.alloc(snapshot_bytes_ *
+                            size_t(verification_slots + (opt_.prompt_cache ? 1 + periodic_slots : 0)));
+        const GpuMemoryPlan plan = qwen35_gpu_plan(g, w, mtp, ctx, opt_.kv, opt_.spec, opt_.prompt_cache, opt_.prompt_cache_slots);
         int64_t slots = opt_.expert_slots;
         if (slots < 0) {
             uint64_t free_bytes = 0;
@@ -889,6 +907,11 @@ class GpuSession final : public InferenceSession {
         verifying_ = false;
         checkpos_.clear();
         draft_pos_ = 0;
+        prompt_cache_state_.forget();
+        periodic_.clear();
+        periodic_slots_.clear();
+        periodic_writes_ = 0;
+        next_periodic_ = 0;
     }
     void begin_decode() override {
         // Learn from the complete prompt, not its first distinct expert ids. The selected
@@ -964,11 +987,14 @@ class GpuSession final : public InferenceSession {
         }
         mark(g_.n_layers, 7, "target output/head", true);
         ++pos_;
+        prompt_cache_state_.consumed.push_back(token);
         if (verifying_) {
             if (checkpos_.size() >= size_t(opt_.spec + 2))
                 throw std::logic_error("verification exceeds window");
             checkpoint(checkpos_.size());
             checkpos_.push_back(pos_);
+        } else {
+            maybe_periodic_checkpoint();
         }
         checked(cudaStreamSynchronize(stream_));
         harvest();
@@ -1030,6 +1056,8 @@ class GpuSession final : public InferenceSession {
             for (int t = 0; t < nt; ++t)
                 checkpos_.push_back(pos_ + t + 1);
         pos_ += nt;
+        prompt_cache_state_.consumed.insert(prompt_cache_state_.consumed.end(), tokens, tokens + nt);
+        maybe_periodic_checkpoint();
         checked(cudaStreamSynchronize(stream_));
         harvest();
     }
@@ -1065,6 +1093,7 @@ class GpuSession final : public InferenceSession {
         if (verifying_ || !mtp_)
             throw std::logic_error("invalid verification");
         checkpos_ = {pos_};
+        prompt_cache_state_.verify_from = (int64_t) prompt_cache_state_.consumed.size();
         checkpoint(0);
         verifying_ = true;
     }
@@ -1076,11 +1105,90 @@ class GpuSession final : public InferenceSession {
         pos_ = checkpos_[accepted];
         checkpos_.clear();
         verifying_ = false;
+        // Rejected draft tokens were read but never accepted: the cache must hold only the accepted
+        // prefix, or a later prompt would be matched against tokens the model did not keep.
+        prompt_cache_state_.consumed.resize((size_t) (prompt_cache_state_.verify_from + accepted));
     }
     void rewind_draft(int64_t p) override {
         if (!mtp_ || p < 0 || p > draft_pos_)
             throw std::logic_error("draft rewind");
         draft_pos_ = p;
+    }
+    int64_t consumed_tokens() const override { return (int64_t) prompt_cache_state_.consumed.size(); }
+    const float *cached_logits() const override {
+        return prompt_cache_state_.logits.empty() ? nullptr : prompt_cache_state_.logits.data();
+    }
+    int64_t prepare_prompt(const int64_t *tokens, int64_t count) override {
+        // Same rule as the CPU tier (PromptCacheState::plan): resume from the deepest checkpoint the
+        // prompt still contains, and read nothing at all when the prompt *is* the end-of-prompt prefix,
+        // because its logits were kept.  GDN state cannot be rewound token by token, so checkpoints are
+        // all the granularity there is.
+        const int64_t at = opt_.prompt_cache
+                               ? prompt_cache_state_.plan(tokens, count, g_.n_vocab, periodic_)
+                               : 0;
+        if (std::getenv("STRATA_QWEN35_CACHE_DEBUG"))
+            std::fprintf(stderr,
+                         "qwen35 prompt cache: count=%lld checkpoint=%lld prefix=%lld periodic=%lld "
+                         "resume=%lld\n",
+                         (long long) count, (long long) prompt_cache_state_.checkpoint,
+                         (long long) reused_prefix(prompt_cache_state_.consumed, tokens, count),
+                         (long long) periodic_.size(), (long long) at);
+        if (at > 0) {
+            int64_t slot = prompt_end_slot_;
+            if (at != prompt_cache_state_.checkpoint) {
+                const auto it = std::find(periodic_.begin(), periodic_.end(), at);
+                if (it == periodic_.end()) throw std::logic_error("prompt resume without a checkpoint");
+                slot = periodic_slots_[(size_t) (it - periodic_.begin())];
+            }
+            checkpoint(slot, true);
+            pos_ = at;
+            draft_pos_ = at;
+            prompt_cache_state_.consumed.resize((size_t) at);
+            checkpos_.clear();
+            verifying_ = false;
+            // The routing profile is *accumulated* across a resumed conversation rather than rebuilt from
+            // the few new tokens: decode placement is ranked from the experts the whole conversation has
+            // exercised, so it stays stable turn to turn instead of being chosen from a short tail.
+            // begin_decode() freezes it again from this request's reads.
+            placement_frozen_ = false;
+            // Resume points beyond the one used describe state this request is about to re-read; keeping
+            // them would let a later prompt resume into a state the conversation no longer matches.  The
+            // interval is for the span that is actually left to read, not for the whole prompt: a resumed
+            // turn re-reads a tail, and its checkpoints belong inside that tail.
+            periodic_.clear();
+            periodic_slots_.clear();
+            prompt_cache_state_.every =
+                PromptCacheState::interval_for(count - at, opt_.prompt_cache_slots);
+            next_periodic_ = at + prompt_cache_state_.every;
+            return at;
+        }
+        reset();
+        prompt_cache_state_.every = PromptCacheState::interval_for(count, opt_.prompt_cache_slots);
+        next_periodic_ = prompt_cache_state_.every;
+        return 0;
+    }
+    void checkpoint_prompt(const float *logits) override {
+        if (!opt_.prompt_cache || !snapshot_.p) return;
+        checkpoint(prompt_end_slot_);
+        prompt_cache_state_.checkpoint = pos_;
+        prompt_cache_state_.valid = true;
+        prompt_cache_state_.remember(logits, g_.n_vocab);
+    }
+    void maybe_periodic_checkpoint() {
+        if (!opt_.prompt_cache || verifying_ || prompt_cache_state_.every <= 0 ||
+            opt_.prompt_cache_slots <= 0 || !snapshot_.p)
+            return;
+        if (pos_ < next_periodic_) return;
+        if (!periodic_.empty() && periodic_.back() == pos_) return;
+        if ((int) periodic_.size() >= opt_.prompt_cache_slots) {
+            periodic_.erase(periodic_.begin());
+            periodic_slots_.erase(periodic_slots_.begin());
+        }
+        const int64_t slot = prompt_end_slot_ + 1 + (periodic_writes_++ % opt_.prompt_cache_slots);
+        checkpoint(slot);
+        periodic_.push_back(pos_);
+        periodic_slots_.push_back(slot);
+        next_periodic_ = pos_ + prompt_cache_state_.every;
     }
 };
 } // namespace
@@ -1091,7 +1199,7 @@ std::unique_ptr<InferenceSession> make_gpu_session(const Qwen35Geometry &g, cons
 // Everything GpuSession puts in VRAM, summed the same way it allocates it. `context` is the KV capacity,
 // so the KV term is the one a launcher's --max-context/--kv choice moves.
 GpuMemoryPlan qwen35_gpu_plan(const Qwen35Geometry &g, const TrunkWeights &w, const MtpWeights *mtp,
-                              int64_t ctx, const std::string &kv, int spec) {
+                              int64_t ctx, const std::string &kv, int spec, bool prompt_cache, int prompt_cache_slots) {
     if (mtp && (spec < 1 || spec > 4))
         throw std::invalid_argument("GPU MTP plan spec must be 1..4");
     GpuMemoryPlan p;
@@ -1129,6 +1237,11 @@ GpuMemoryPlan qwen35_gpu_plan(const Qwen35Geometry &g, const TrunkWeights &w, co
         p.dense += mat(mtp->eh_proj) + mat(mtp->output);
         p.scratch += (spec + 2) * p.state;
     }
+    // The prompt cache's checkpoints: one at the end of each prompt (needed with or without MTP; spec 0 is
+    // the shipping default) plus the periodic ones that make a resume usable with a chat template.  The
+    // session allocates the same number of state copies with the same expression.
+    if (prompt_cache)
+        p.scratch += p.state * uint64_t(1 + std::max(0, prompt_cache_slots));
     p.scratch += scratch_floats(g, ctx) * 4 + Batch * size_t(g.n_expert_used) * 4 + size_t(Q) * 4 +
                  k::native_q8_1_bytes(g.conv_channels(), Batch) +
                  k::native_expert_scratch_bytes(Batch * g.n_expert_used, g.n_ff_exp) +

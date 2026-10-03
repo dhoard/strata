@@ -1,0 +1,10 @@
+{
+  "cases": 7,
+  "failures": 7,
+  "steps": 32,
+  "kv": "f16",
+  "context": 131072,
+  "model": "/hf/models--AtomicChat--Ornith-1.5-35B-A3B-GGUF/snapshots/7aa8fc1d9b861d797880f4a341166d4bb3439f74/Ornith-1.5-35B-A3B-AD-Q4_K-IQ4_XS.gguf",
+  "mtp": "/hf/models--EryriLabs--Ornith-1.5-35B-A3B-BigBang-MTP-GGUF/snapshots/2e9f6f487b82200f2a045e67d01a3f1e2982b00a/mtpdraft-Q8_0.gguf",
+  "upstream": "/src/build-ornith-reference/ornith_reference"
+}

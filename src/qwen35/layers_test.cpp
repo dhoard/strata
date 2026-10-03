@@ -1,5 +1,6 @@
 // src/qwen35/layers_test.cpp - Qwen35 attention, MoE and trunk sanity/parity checks.
 #include "strata/qwen35/qwen35.hpp"
+#include "strata/qwen35/session.hpp"
 
 #include <algorithm>
 #include <cmath>
@@ -264,6 +265,96 @@ int main() {
         bool ok = ts.restore(prefix,err);
         q::trunk_forward(g,tw,ts,6,logits.data());
         check(ok && !ts.restore(abandoned,err),"reject snapshot whose KV prefix was overwritten by another branch");
+
+        // Prompt cache (the serve loop's conversation cache).  A request whose prompt extends what the
+        // session already holds resumes from the end-of-prompt checkpoint and reads only the new tail;
+        // the logits it produces must be *bitwise* what a session without a cache produces, because the
+        // restored state is the same state and the tail is read by the same kernels.
+        {
+            struct Run { q::GenerationStats stats; std::vector<int64_t> tokens; std::vector<float> logits; };
+            const std::vector<int64_t> first = {3, 5, 6, 7, 3};
+            const auto run = [&](q::InferenceSession& s, const std::vector<int64_t>& prompt, int64_t n) {
+                Run r;
+                r.stats = q::generate(s, g, /*eos*/ -1, prompt, n, 0,
+                                      [&](const std::vector<float>& l) {
+                                          if (r.logits.empty()) r.logits = l;
+                                          return int64_t(std::max_element(l.begin(), l.end()) - l.begin());
+                                      },
+                                      [&](int64_t t) { r.tokens.push_back(t); },
+                                      [] { return false; });
+                return r;
+            };
+            q::CpuSession cached(g, tw, nullptr, 16, /*prompt_cache*/ true);
+            q::CpuSession plain(g, tw, nullptr, 16, /*prompt_cache*/ false);
+            const Run first_cached = run(cached, first, 4);
+            const Run first_plain = run(plain, first, 4);
+            check(first_cached.stats.reused == 0 && first_cached.tokens == first_plain.tokens,
+                  "first request has nothing cached and reads in full");
+            // The second turn is the usual client shape: the first prompt, our answer, two new tokens.
+            std::vector<int64_t> second = first;
+            second.insert(second.end(), first_cached.tokens.begin(), first_cached.tokens.end());
+            second.push_back(9);
+            second.push_back(4);
+            const Run resumed = run(cached, second, 4);
+            const Run full = run(plain, second, 4);
+            check(resumed.stats.reused == (int64_t) first.size(),
+                  "second turn resumes at the end of the first prompt");
+            check(resumed.logits == full.logits && resumed.tokens == full.tokens,
+                  "a resumed turn's logits and tokens are bitwise a full read's");
+            // The same prompt again reads nothing at all: the checkpoint's own logits are reused.
+            const Run repeat = run(cached, second, 4);
+            check(repeat.stats.reused == (int64_t) second.size() && repeat.logits == full.logits &&
+                      repeat.tokens == full.tokens,
+                  "a repeat of the same prompt reads nothing and keeps its logits");
+            // A longer prompt that still starts with the cached one resumes further along it.
+            std::vector<int64_t> third = second;
+            third.push_back(8);
+            check(run(cached, third, 4).stats.reused == (int64_t) second.size(),
+                  "a longer prompt resumes at the previous prompt's end");
+            // A prompt edited inside the cached prefix is a full read, not a wrong resume.
+            std::vector<int64_t> edited = second;
+            edited[2] = 11;
+            check(run(cached, edited, 4).stats.reused == 0,
+                  "an edited prefix falls back to a full read");
+            check(q::reused_prefix(std::vector<int64_t>{1, 2, 3}, std::vector<int64_t>{1, 2, 9}.data(), 3) == 2 &&
+                      q::reused_prefix(std::vector<int64_t>{1, 2}, std::vector<int64_t>{1, 2, 3}.data(), 3) == 2 &&
+                      q::reused_prefix(std::vector<int64_t>{}, std::vector<int64_t>{1}.data(), 1) == 0,
+                  "the shared-prefix rule counts only leading matches");
+        }
+
+        // The case a chat template actually produces: the next turn's prompt diverges at the *very end*
+        // of the previous one (Qwen re-renders a past assistant turn without the <think> scaffold its
+        // generation prompt ended with), so the end-of-prompt checkpoint sits inside the divergence and
+        // only a periodic checkpoint can be used.
+        {
+            struct Run { q::GenerationStats stats; std::vector<int64_t> tokens; std::vector<float> logits; };
+            const auto run = [&](q::InferenceSession& s, const std::vector<int64_t>& prompt, int64_t n) {
+                Run r;
+                r.stats = q::generate(s, g, /*eos*/ -1, prompt, n, 0,
+                                      [&](const std::vector<float>& l) {
+                                          if (r.logits.empty()) r.logits = l;
+                                          return int64_t(std::max_element(l.begin(), l.end()) - l.begin());
+                                      },
+                                      [&](int64_t t) { r.tokens.push_back(t); }, [] { return false; });
+                return r;
+            };
+            std::vector<int64_t> opening(14);
+            for (size_t i = 0; i < opening.size(); ++i) opening[i] = (int64_t) (1 + i % 12);
+            std::vector<int64_t> next = opening;
+            next.resize(12);              // the client's re-render cuts the last two tokens
+            next.push_back(9);
+            next.push_back(7);
+            next.push_back(5);
+            q::CpuSession cached(g, tw, nullptr, 16, /*prompt_cache*/ true, /*slots*/ 4);
+            q::CpuSession plain(g, tw, nullptr, 16, /*prompt_cache*/ false);
+            run(cached, opening, 1);
+            const Run resumed = run(cached, next, 1);
+            const Run full = run(plain, next, 1);
+            check(resumed.stats.reused == 8,
+                  "a prompt that diverges at the previous prompt's end resumes at a periodic checkpoint");
+            check(resumed.logits == full.logits && resumed.tokens == full.tokens,
+                  "the periodic-checkpoint resume is bitwise a full read");
+        }
     }
 
     {

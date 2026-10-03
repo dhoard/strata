@@ -1,0 +1,8 @@
+<|im_start|>user
+A C++ project has these files: `src/core/session.cpp` (owns the per-request state), `src/kernels/attention.cu` (the GPU kernel), `src/core/session.hpp` (the interface), and `tests/session_test.cpp`. A bug report says the second request in a process returns the first request's tokens. Walk through where you would look, in order, and what you would check at each step before changing any code.<|im_end|>
+<|im_start|>assistant
+<think>
+
+</think>
+
+

@@ -10,6 +10,8 @@
 #   ./run3.sh --vram-report        print what the tier needs against the VRAM budget, then exit
 #   ./run3.sh --detach            background;  ./run3.sh --check  asks it afterwards whether it is up
 #   ./run3.sh --offline           never download: fail with the command to run instead
+#   ./run3.sh --env STRATA_PROMPT_CACHE=0        read every prompt in full (no conversation cache)
+#   ./run3.sh --env STRATA_PROMPT_CACHE_SLOTS=8  more resume points, more VRAM (see docs/ORNITH_QWEN35MOE.md)
 #   ./run3.sh --dry-run           print the docker command and the reasoning, change nothing
 #
 # Ornith-1.5 is a DIFFERENT architecture from Qwen3.8-Flash-Next (Qwen35MoE: 40 layers, 30 gated-delta-net

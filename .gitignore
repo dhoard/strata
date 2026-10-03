@@ -19,6 +19,12 @@ __pycache__/
 # plan v0.3 P1 (repository hygiene, review E1): profiler captures and large diagnostic dumps stay out of git.
 *.nsys-rep
 
+# Local scratch files and regenerated benchmark tensors/tokenizer extracts.
+# Keep benchmark scripts, prompts, metadata and measured result summaries in Git.
+/tmp/
+/bench/results/**/*.f32
+/bench/results/**/tokenizer/
+
 # Amanda harness (local tooling + session state, not project source)
 .amanda/
 amanda/

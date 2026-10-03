@@ -1,0 +1,8 @@
+<|im_start|>user
+Answer with exactly three bullet points. Each bullet must begin with the word `Because`. Do not add an introduction, a conclusion, or any text outside the three bullets. The subject is why power supplies are rated in watts.<|im_end|>
+<|im_start|>assistant
+<think>
+
+</think>
+
+

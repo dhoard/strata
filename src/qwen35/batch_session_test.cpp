@@ -123,6 +123,80 @@ int main(int argc, char **argv) {
                 if (first != run(0))
                     throw std::runtime_error("cancelled prefill poisoned next request");
                 std::printf("kv=%s slots=%d repeated requests/spec/cancellation bitwise equal\n", kv, slots);
+                // Prompt cache: the next turn of a conversation reads only its new tail, and the logits it
+                // produces are bitwise what a cacheless session produces from a full read.  slots=0 keeps
+                // every routed expert on the CPU, so expert placement cannot differ between the two arms.
+                if (slots == 0) {
+                    const auto greedy = [](const std::vector<float> &v) {
+                        return std::max_element(v.begin(), v.end()) - v.begin();
+                    };
+                    const auto no_cancel = [] { return false; };
+                    s->reset();   // a fresh conversation: the arms above left their own resume point behind
+                    std::vector<int64_t> turn(prompt);
+                    std::vector<int64_t> answer;
+                    const auto opening = q::generate(*s, g, w.eos_token, prompt, 8, 0, greedy,
+                                                     [&](int64_t t) { answer.push_back(t); }, no_cancel);
+                    if (opening.reused != 0)
+                        throw std::runtime_error("a fresh conversation reported a cached prefix");
+                    // The client's next request: the same prompt, the answer, and new tokens.
+                    turn.insert(turn.end(), answer.begin(), answer.end());
+                    turn.push_back(42);
+                    std::vector<float> cached_logits;
+                    std::vector<int64_t> cached_tokens;
+                    const auto resumed = q::generate(
+                        *s, g, w.eos_token, turn, 4, 0,
+                        [&](const std::vector<float> &v) {
+                            if (cached_logits.empty()) cached_logits = v;
+                            return greedy(v);
+                        },
+                        [&](int64_t t) { cached_tokens.push_back(t); }, no_cancel);
+                    if (resumed.reused != (int64_t) prompt.size())
+                        throw std::runtime_error("the second turn did not resume at the prompt's end");
+                    q::GpuOptions plain = o;
+                    plain.prompt_cache = false;
+                    auto cold = q::make_gpu_session(g, w, draft ? &mtp : nullptr, 512, plain);
+                    std::vector<float> full_logits;
+                    std::vector<int64_t> full_tokens;
+                    q::generate(*cold, g, w.eos_token, turn, 4, 0,
+                                [&](const std::vector<float> &v) {
+                                    if (full_logits.empty()) full_logits = v;
+                                    return greedy(v);
+                                },
+                                [&](int64_t t) { full_tokens.push_back(t); }, no_cancel);
+                    equal(cached_logits, full_logits, "prompt-cache logits");
+                    if (cached_tokens != full_tokens)
+                        throw std::runtime_error("prompt cache changed greedy tokens");
+                    std::printf("kv=%s slots=%d prompt cache: %lld of %lld prompt tokens reused, logits "
+                                "bitwise equal\n", kv, slots, (long long) resumed.reused,
+                                (long long) turn.size());
+                    // The chat-template shape: the next prompt diverges at the previous prompt's very end,
+                    // so only a periodic checkpoint can be used.
+                    s->reset();
+                    std::vector<int64_t> cut = prompt;
+                    cut.resize(10);
+                    cut.push_back(77);
+                    cut.push_back(78);
+                    std::vector<float> cached2, full2;
+                    q::generate(*s, g, w.eos_token, prompt, 2, 0, greedy, [](int64_t) {}, no_cancel);
+                    const auto periodic = q::generate(
+                        *s, g, w.eos_token, cut, 2, 0,
+                        [&](const std::vector<float> &v) {
+                            if (cached2.empty()) cached2 = v;
+                            return greedy(v);
+                        },
+                        [](int64_t) {}, no_cancel);
+                    q::generate(*cold, g, w.eos_token, cut, 2, 0,
+                                [&](const std::vector<float> &v) {
+                                    if (full2.empty()) full2 = v;
+                                    return greedy(v);
+                                },
+                                [](int64_t) {}, no_cancel);
+                    if (periodic.reused <= 0 || periodic.reused > 10)
+                        throw std::runtime_error("a prompt cut near the end did not resume from a periodic checkpoint");
+                    equal(cached2, full2, "periodic prompt-cache logits");
+                    std::printf("kv=%s slots=%d periodic prompt cache: %lld of %lld reused, logits bitwise "
+                                "equal\n", kv, slots, (long long) periodic.reused, (long long) cut.size());
+                }
                 // Reject bad batches before changing session state.
                 const auto pos = s->position();
                 const int64_t bad[] = {198, g.n_vocab};

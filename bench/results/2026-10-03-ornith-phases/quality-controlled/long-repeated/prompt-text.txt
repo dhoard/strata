@@ -1,0 +1,11 @@
+<|im_start|>user
+Continue the sequence exactly, keeping the same pattern, one item per line, and add twelve more lines:
+item-001: alpha
+item-002: beta
+item-003: gamma<|im_end|>
+<|im_start|>assistant
+<think>
+
+</think>
+
+

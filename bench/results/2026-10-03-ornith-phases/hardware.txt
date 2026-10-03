@@ -1,0 +1,27 @@
+# Ornith-1.5-35B-A3B phase measurements (RX 7700 XT / gfx1101)
+
+baseline SHA: 29586b61070fff04fa2e9b31e63dc3e62874299f
+artifact: AtomicChat/Ornith-1.5-35B-A3B-GGUF @ 7aa8fc1d9b861d797880f4a341166d4bb3439f74
+         Ornith-1.5-35B-A3B-AD-Q4_K-IQ4_XS.gguf (20,125,923,520 bytes, sha256 6def24b4ef1436f0...)
+draft:   EryriLabs/Ornith-1.5-35B-A3B-BigBang-MTP-GGUF @ 2e9f6f487b82200f2a045e67d01a3f1e2982b00a
+         mtpdraft-Q8_0.gguf (1,990,649,440 bytes)
+
+## Hardware
+  Marketing Name:          AMD Radeon RX 7700 XT              
+  Marketing Name:          AMD Ryzen 9 7900 12-Core Processor 
+      Name:                    amdgcn-amd-amdhsa--gfx1036         
+      Name:                    amdgcn-amd-amdhsa--gfx10-3-generic 
+      Name:                    amdgcn-amd-amdhsa--gfx1101         
+      Name:                    amdgcn-amd-amdhsa--gfx11-generic   
+  Name:                    gfx1036                            
+  Name:                    gfx1101                            
+CPU: AMD Ryzen 9 7900 12-Core Processor (24 logical)
+RAM: 122 GiB
+ROCm: /opt/rocm-7.2.4
+
+## Software
+HIP version: 7.2.53211-e1a6bc5663
+AMD clang version 22.0.0git (https://github.com/RadeonOpenCompute/llvm-project roc-7.2.1 26084 f58b06dce1f9c15707c5f808fd002e18c2accf7e)
+Python 3.12.3
+engine: 26d69ff6d7100218aa70782b
+image:  strata-hip:gfx1101-latest (357a99e2013f)

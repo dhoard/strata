@@ -6,9 +6,13 @@
 //
 //     READY <ctx> stop
 //     < GEN <max_new> [key=value ...] <id,id,...>
+//     > PP <read> <total> <ms> <tok/s>   (while a prompt is read; the server's progress line)
 //     > T <id>                  (one per generated token)
-//     > DONE <generated> <prompt_tokens> <prompt_ms> <decode_ms> <finish>
+//     > DONE <generated> <prompt_tokens> <prompt_ms> <decode_ms> <finish> <accepted> <proposed> <reused>
 //     < STOP | QUIT
+//
+// `reused` is the prompt cache: prompt tokens the session already held from the previous request, so the
+// server reports them as cached_tokens.  --prompt-cache 0 turns the cache off (a full read every request).
 //
 // This is the same protocol `serve/server.py` speaks to `strata --serve`, so the Python server, the OpenAI API
 // and run3.sh need no change to drive this binary.  Sampling keys the server sends are honoured where they are
@@ -128,13 +132,15 @@ std::vector<int64_t> parse_ids(const std::string& s) {
 }
 
 void done(const q::GenerationStats& r) {
-    std::printf("DONE %lld %lld %.3f %.3f %s %lld %lld 0\n",(long long) r.generated,
+    // Field 8 is the conversation cache's hit, which the server reports as cached_tokens (serve/server.py
+    // parses DONE with the same layout as the Qwen3.8 engine).
+    std::printf("DONE %lld %lld %.3f %.3f %s %lld %lld %lld\n",(long long) r.generated,
                 (long long) r.prompt_tokens,r.prompt_ms,r.decode_ms,r.finish.c_str(),
-                (long long) r.accepted,(long long) r.proposed);
+                (long long) r.accepted,(long long) r.proposed,(long long) r.reused);
     std::fflush(stdout);
-    std::fprintf(stderr,"qwen35 timing: prefill=%.3f ms decode=%.3f ms generated=%lld tok/s=%.3f accepted=%lld/%lld draft=%.3f ms verify=%.3f ms\n",
+    std::fprintf(stderr,"qwen35 timing: prefill=%.3f ms decode=%.3f ms generated=%lld tok/s=%.3f accepted=%lld/%lld draft=%.3f ms verify=%.3f ms reused=%lld\n",
                  r.prompt_ms,r.decode_ms,(long long) r.generated,r.decode_ms ? 1000*r.generated/r.decode_ms : 0,
-                 (long long) r.accepted,(long long) r.proposed,r.draft_ms,r.verify_ms);
+                 (long long) r.accepted,(long long) r.proposed,r.draft_ms,r.verify_ms,(long long) r.reused);
 }
 
 struct Command { std::string line; std::shared_ptr<std::atomic<bool>> stop; };
@@ -196,10 +202,22 @@ int run_serve(q::InferenceSession& session, const strata::core::Qwen35Geometry& 
             std::mt19937_64 rng(sampling.seed);
             auto history = ids;
             const bool raw_greedy = sampling.temperature == 0 && sampling.penalty_repeat == 1 && sampling.penalty_freq == 0 && sampling.penalty_present == 0;
+            // One PP line per half second of reading (the server turns it into "reading the prompt: N of M"
+            // and a keep-alive), and always the last one.
+            auto last_pp = std::chrono::steady_clock::now();
+            const auto progress = [&](int64_t read, int64_t total) {
+                const auto now = std::chrono::steady_clock::now();
+                if (read < total && now - last_pp < std::chrono::milliseconds(500)) return;
+                const double ms = std::chrono::duration<double,std::milli>(now - last_pp).count();
+                last_pp = now;
+                std::printf("PP %lld %lld %.0f %.1f\n",(long long) read,(long long) total, ms,
+                            ms > 0 ? 1000.0 * (total ? double(total) : 1.0) / ms : 0.0);
+                std::fflush(stdout);
+            };
             const auto result = q::generate(session,g,eos,ids,max_new,raw_greedy ? spec : 0,
                 [&](const auto& logits){return select_with_penalties(logits,sampling,rng,history);},
                 [&](int64_t token){history.push_back(token); std::printf("T %lld\n",(long long) token); std::fflush(stdout);},
-                [&]{return c.stop->load();});
+                [&]{return c.stop->load();},-1,progress);
             done(result);
         } catch (const std::exception& e) { std::printf("ERR %s\n",e.what()); std::fflush(stdout); }
     }
@@ -212,7 +230,7 @@ int main(int argc, char** argv) {
     try {
         std::string path, mtp_path; std::vector<int64_t> tokens;
         int64_t max_new = 8, context = 0; int spec = 0, workers = 0, force_reject = -1;
-        bool check = false, serve = false, gpu = false, fit_report = false; q::GpuOptions gpu_options;
+        bool check = false, serve = false, gpu = false, fit_report = false, prompt_cache = true; q::GpuOptions gpu_options;
         for (int i=1;i<argc;++i) {
             const std::string arg = argv[i];
             const auto next = [&]() -> std::string {
@@ -236,6 +254,8 @@ int main(int argc, char** argv) {
                     throw std::invalid_argument("--kv must be f32 or f16 (the resident KV layouts this "
                                                 "backend implements and has parity for)"); }
             else if (arg == "--expert-cache") { auto v=next(); gpu_options.expert_slots = v=="auto" ? -1 : integer(v); }
+            else if (arg == "--prompt-cache") prompt_cache = integer(next()) != 0;
+            else if (arg == "--prompt-cache-slots") gpu_options.prompt_cache_slots = (int) integer(next());
             else if (arg == "--serve") serve = true;
             else if (arg == "--check") check = true;
             else if (arg == "--capabilities") {
@@ -264,11 +284,13 @@ int main(int argc, char** argv) {
         if (check) { std::puts("check ok"); return 0; }
         gpu_options.workers = workers;
         gpu_options.spec = spec;
+        gpu_options.prompt_cache = prompt_cache;
+        if (prompt_cache && gpu_options.prompt_cache_slots < 0) throw std::invalid_argument("--prompt-cache-slots must be >= 0");
         if (fit_report) {
             // Predicts the resident tier's VRAM before it is built, so the launcher can refuse a context/KV/slot
             // combination that cannot fit instead of failing after the model is loaded. Allocation-free.
             if (!gpu) throw std::invalid_argument("--fit-report describes the GPU tier; pass --gpu with it");
-            const q::GpuMemoryPlan plan = q::qwen35_gpu_plan(g, w, spec ? &mtp : nullptr, context, gpu_options.kv, spec);
+            const q::GpuMemoryPlan plan = q::qwen35_gpu_plan(g, w, spec ? &mtp : nullptr, context, gpu_options.kv, spec, prompt_cache, gpu_options.prompt_cache_slots);
             uint64_t free_bytes = 0;
             if (!q::gpu_free_bytes(free_bytes, err)) throw std::runtime_error("device memory query: " + err);
             const double GiB = 1073741824.0, MiB = 1048576.0;
@@ -312,7 +334,7 @@ int main(int argc, char** argv) {
                      gpu_options.expert_slots < 0 ? "auto" : std::to_string(gpu_options.expert_slots).c_str(),
                      workers == 0 ? "auto" : std::to_string(workers).c_str(), (long long) context);
         if (gpu) owned = q::make_gpu_session(g,w,spec ? &mtp : nullptr,context,gpu_options);
-        else owned = std::make_unique<q::CpuSession>(g,w,spec ? &mtp : nullptr,context);
+        else owned = std::make_unique<q::CpuSession>(g,w,spec ? &mtp : nullptr,context,prompt_cache,gpu_options.prompt_cache_slots);
         auto& session = *owned;
         if (serve) return run_serve(session,g,w.eos_token,spec);
         Sampling sampling; std::mt19937_64 rng(0);

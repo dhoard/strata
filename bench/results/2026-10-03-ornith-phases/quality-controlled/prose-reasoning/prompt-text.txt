@@ -1,0 +1,8 @@
+<|im_start|>user
+Explain, in plain language and without equations, why a mixture-of-experts model with a small number of selected experts per token can still be more accurate than a dense model of the same total parameter count. Give one concrete example, then one counter-example where it would not help.<|im_end|>
+<|im_start|>assistant
+<think>
+
+</think>
+
+

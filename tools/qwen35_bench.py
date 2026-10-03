@@ -22,7 +22,13 @@ def main():
     ap.add_argument("--tokens", type=Path, required=True)
     ap.add_argument("--context", type=int, default=131072)
     ap.add_argument("--new", type=int, default=128)
+    ap.add_argument("--prefill", type=int, default=0,
+                    help="prompt tokens per engine pass (0 = the engine's own default of 8; 1..8 are "
+                         "the implemented native tile sizes, larger requests are split into tiles)")
     ap.add_argument("--configs", default="gpu:12:0:f32:0,cpu:12:0:f32:0")
+    ap.add_argument("--repeats", type=int, default=4,
+                    help="requests per configuration: the first is a warmup, the rest are timed "
+                         "(default 4 = one warmup + three timed, the shipping methodology)")
     ap.add_argument("--out", type=Path, required=True)
     a = ap.parse_args()
     a.out.mkdir(parents=True, exist_ok=True)
@@ -38,6 +44,8 @@ def main():
             if not a.mtp:
                 ap.error("speculation requires --mtp")
             cmd += ["--mtp", a.mtp]
+        if a.prefill:
+            cmd += ["--prefill", str(a.prefill)]
         start = time.monotonic()
         rows = []
         memory = {"host_rss_peak_bytes":0,"host_vmhwm_peak_bytes":0,"device_vram_peak_bytes":0}
@@ -66,7 +74,7 @@ def main():
                 load_seconds = time.monotonic()-start
                 with (a.out / (config.replace(":", "-")+".stdout")).open("w") as output:
                     output.write(line+"\n")
-                    for repeat in range(4):
+                    for repeat in range(a.repeats):
                         p.stdin.write(f"GEN {a.new} temperature=0 penalty_repeat=1 "
                                       + ",".join(map(str, ids))+"\n")
                         p.stdin.flush()
@@ -97,7 +105,8 @@ def main():
                     p.kill(); p.wait()
                 stop_monitor.set();watcher.join()
         speeds = [r["tok_s"] for r in rows if not r["warmup"]]
-        result = dict(config=config, command=cmd, context=a.context, load_seconds=load_seconds,
+        result = dict(config=config, command=cmd, context=a.context, prefill=a.prefill,
+                      repeats=a.repeats, load_seconds=load_seconds,
                       median_tok_s=statistics.median(speeds), min_tok_s=min(speeds), max_tok_s=max(speeds),
                       runs=rows)
         result.update(memory)

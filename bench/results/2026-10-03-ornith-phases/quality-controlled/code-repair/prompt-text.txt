@@ -1,0 +1,31 @@
+<|im_start|>user
+Review this implementation and explain how to fix the race. Then give the corrected `run()` method.
+class WorkQueue {
+    std::mutex mutex;
+    std::condition_variable ready;
+    std::deque<std::function<void()>> pending;
+    bool stopping = false;
+public:
+    void submit(std::function<void()> job) {
+        std::unique_lock lock(mutex);
+        pending.push_back(std::move(job));
+        ready.notify_one();
+    }
+    void run() {
+        while (!stopping) {
+            std::unique_lock lock(mutex);
+            ready.wait(lock, [&] { return stopping || !pending.empty(); });
+            if (stopping && pending.empty()) return;
+            auto job = std::move(pending.front());
+            pending.pop_front();
+            lock.unlock();
+            job();
+        }
+    }
+};<|im_end|>
+<|im_start|>assistant
+<think>
+
+</think>
+
+

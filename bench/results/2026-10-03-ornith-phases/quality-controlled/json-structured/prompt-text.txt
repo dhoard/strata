@@ -1,0 +1,8 @@
+<|im_start|>user
+Return only a JSON object describing a 40-layer hybrid language model. Use exactly these keys: architecture (string), layers (integer), recurrent_layers (integer), attention_layers (integer), experts (integer), experts_per_token (integer). No prose, no markdown fence.<|im_end|>
+<|im_start|>assistant
+<think>
+
+</think>
+
+

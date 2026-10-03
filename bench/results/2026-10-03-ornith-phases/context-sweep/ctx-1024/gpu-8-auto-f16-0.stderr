@@ -1,0 +1,6 @@
+strata-qwen35: 40 layers, 2048 wide, 256 experts top-8, context 131072, trained MTP absent spec 0
+qwen35 backend=gpu (dense+attention on card, experts split VRAM/CPU) kv=f16 expert_cache=auto pool_workers=8 context=131072
+HIP budget: 10240 MiB ceiling, 1024 MiB runtime reserve, 256 MiB slack; explicit allocations capped at 8960 MiB
+HIP budget: refusing 134217728 bytes before allocation on device 0 (7036928000 bytes available within ceiling)
+strata-qwen35: out of memory
+HIP budget: device 0 tracked peak 2358312960 bytes

@@ -1,0 +1,65 @@
+[
+  {
+    "case": "code-generate",
+    "category": "code generation",
+    "prompt_tokens": 77,
+    "steps": 16,
+    "kv": "f16",
+    "eos": 248046,
+    "error": "/src/build-hip/qwen35_gpu_parity failed (1): U: KV=f16 slots=0 workers=12 dense/state ready; CPU expert backing 16.250 GiB\nqwen35 GPU plan: dense=2.524 GiB gdn=0.061 GiB kv=0.011 GiB scratch=0.378 GiB; planned 2.974 GiB, allocated 2.974 GiB\nqwen35 GPU totals: hits=0 misses=25256 CPU=1261.263 ms GPU-wait=73.311 ms\nqwen35 transfers: activation D2H=25963168 parts H2D=206897152 cache H2D=0 bytes\nHIP budget: device 0 tracked peak 3212771328 bytes"
+  },
+  {
+    "case": "code-repair",
+    "category": "code repair",
+    "prompt_tokens": 217,
+    "steps": 16,
+    "kv": "f16",
+    "eos": 248046,
+    "error": "/src/build-hip/qwen35_gpu_parity failed (1): HIP budget: 10240 MiB ceiling, 1024 MiB runtime reserve, 256 MiB slack; explicit allocations capped at 8960 MiB\nHIP budget: refusing 540344320 bytes before allocation on device 0 (7118192640 bytes available within ceiling)\nGPU parity: out of memory\nHIP budget: device 0 tracked peak 2277048320 bytes"
+  },
+  {
+    "case": "repo-reasoning",
+    "category": "repository reasoning",
+    "prompt_tokens": 118,
+    "steps": 16,
+    "kv": "f16",
+    "eos": 248046,
+    "error": "/src/build-ornith-reference/ornith_reference failed (1): 7188054016 bytes available within ceiling)\nggml_backend_cuda_buffer_type_alloc_buffer: allocating 556.68 MiB on device 0: cudaMalloc failed: out of memory\nalloc_tensor_range: failed to allocate ROCm0 buffer of size 583723008\nllama_model_load: error loading model: unable to allocate ROCm0 buffer\nllama_model_load_from_file_impl: failed to load model\nHIP budget: device 0 tracked peak 2207186944 bytes"
+  },
+  {
+    "case": "json-structured",
+    "category": "structured JSON",
+    "prompt_tokens": 81,
+    "steps": 16,
+    "kv": "f16",
+    "eos": 248046,
+    "error": "/src/build-ornith-reference/ornith_reference failed (1): 7188054016 bytes available within ceiling)\nggml_backend_cuda_buffer_type_alloc_buffer: allocating 556.68 MiB on device 0: cudaMalloc failed: out of memory\nalloc_tensor_range: failed to allocate ROCm0 buffer of size 583723008\nllama_model_load: error loading model: unable to allocate ROCm0 buffer\nllama_model_load_from_file_impl: failed to load model\nHIP budget: device 0 tracked peak 2207186944 bytes"
+  },
+  {
+    "case": "prose-reasoning",
+    "category": "prose reasoning",
+    "prompt_tokens": 83,
+    "steps": 16,
+    "kv": "f16",
+    "eos": 248046,
+    "error": "/src/build-ornith-reference/ornith_reference failed (1): 7188054016 bytes available within ceiling)\nggml_backend_cuda_buffer_type_alloc_buffer: allocating 556.68 MiB on device 0: cudaMalloc failed: out of memory\nalloc_tensor_range: failed to allocate ROCm0 buffer of size 583723008\nllama_model_load: error loading model: unable to allocate ROCm0 buffer\nllama_model_load_from_file_impl: failed to load model\nHIP budget: device 0 tracked peak 2207186944 bytes"
+  },
+  {
+    "case": "instruction-following",
+    "category": "instruction following",
+    "prompt_tokens": 71,
+    "steps": 16,
+    "kv": "f16",
+    "eos": 248046,
+    "error": "/src/build-ornith-reference/ornith_reference failed (1): 7188054016 bytes available within ceiling)\nggml_backend_cuda_buffer_type_alloc_buffer: allocating 556.68 MiB on device 0: cudaMalloc failed: out of memory\nalloc_tensor_range: failed to allocate ROCm0 buffer of size 583723008\nllama_model_load: error loading model: unable to allocate ROCm0 buffer\nllama_model_load_from_file_impl: failed to load model\nHIP budget: device 0 tracked peak 2207186944 bytes"
+  },
+  {
+    "case": "long-repeated",
+    "category": "long repeated structure",
+    "prompt_tokens": 72,
+    "steps": 16,
+    "kv": "f16",
+    "eos": 248046,
+    "error": "/src/build-ornith-reference/ornith_reference failed (1): 7188054016 bytes available within ceiling)\nggml_backend_cuda_buffer_type_alloc_buffer: allocating 556.68 MiB on device 0: cudaMalloc failed: out of memory\nalloc_tensor_range: failed to allocate ROCm0 buffer of size 583723008\nllama_model_load: error loading model: unable to allocate ROCm0 buffer\nllama_model_load_from_file_impl: failed to load model\nHIP budget: device 0 tracked peak 2207186944 bytes"
+  }
+]
