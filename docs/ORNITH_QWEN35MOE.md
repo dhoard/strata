@@ -12,16 +12,21 @@ records the model, the architecture, the artifacts, what is implemented and veri
 | GGUF inspection and the checked-in layout report | done, measured |
 | Architecture identity (`ModelKind`) and the Qwen35MoE geometry/tensor guard | done, 16-case test + the real header |
 | Native routed experts at 2048/512 with IQ4_XS gate/up + Q4_K down (grouped HIP) | done, GPU parity |
-| Single-file (Ornith) cache resolution and `run3.sh` host-side launcher | done, dry-run verified |
+| Single-file (Ornith) cache resolution and `run3.sh` host-side launcher | done, contract-tested (9 new `run3.sh` cases in `docker/test_runtime_contract.py`) |
 | Qwen35 forward pass: GDN, full attention, MoE, ordinary-residual trunk | done, host tests + runs on the real model |
 | GGUF loader + quantized matvec (ggml-cpu vec_dot for the projections) | done, loads the 20 GB artifact |
-| Session/serve wiring, so `run3.sh` executes the model | done, `run3.sh` serves it |
-| GPU dense tier (dense projections through `native_mmvq`, `STRATA_QWEN35_GPU=1`) | started, opt-in, not yet a win |
-| Device-resident GPU execution of the Qwen35 layers (the path to 50-70 tok/s) | **not implemented** |
-| External Qwen3.6 MTP backend and speculative rollback | **not implemented** |
+| CPU tier (`./run3.sh --cpu`): every layer on CPU through ggml-cpu, served by the same server surface | done, 9.1 tok/s measured |
+| GPU tier (the default): dense projections, GDN, attention, KV, norms, shared expert and the expert cache on the card; the expert pool that does not fit streamed from system RAM | done, **52.0 tok/s** with 131072 KV capacity (64-token prompt, 128 outputs; measurements below) |
+| VRAM expert cache with per-layer admission and `--expert-cache auto` sized from measured free bytes | done; automatic capacity, prompt frequency placement frozen during decode |
+| External Qwen3.6 MTP backend and greedy speculative rollback | done; batched verification and exact rollback; spec 1 measures **50.0 vs 52.0 tok/s** target-only, so spec defaults to 0 |
+| VRAM fit report (`strata-qwen35 --fit-report`), run by the container before it serves | done; predicts the session's own allocation exactly (planned 8.482 GiB = allocated 8.482 GiB) |
+| Chunked prefill and multi-token verification (one pass over the weights for several tokens) | done, 8-token causal tiles; full logits/hidden/state and all rollback prefixes bitwise equal to single-token execution |
 
-The layer math and the artifact contract are proven; the loader and the serve integration are what stand
-between them and a running `./run3.sh`. See "Remaining work" at the bottom.
+`./run3.sh` runs the GPU/CPU split by default, the same contract `run.sh` and `run2.sh` use: whatever fits
+stays on the card, and the routed expert set that does not fit is streamed from system RAM. The latest warmed code measurement is 52.0 tok/s, within the lower end of the 50-70 target. This is
+**decode throughput with 131072 KV capacity**, not a filled 128K prompt benchmark. Prefill, cache placement,
+and server overhead are reported separately. Trained MTP is available through `--spec`; it is slower on
+this workload and is not the default.
 
 ## The model
 
@@ -118,7 +123,7 @@ model's expert geometry, and the CMake tests are now registered for HIP as well 
 ## `run3.sh`
 
 ```
-./run3.sh                     # Ornith AD-Q4_K-IQ4_XS + external MTP, http://127.0.0.1:9931
+./run3.sh                     # Ornith AD-Q4_K-IQ4_XS, http://127.0.0.1:9931
 ./run3.sh --no-mtp            # target-only, spec 0
 ./run3.sh --mtp /path/draft.gguf
 ./run3.sh --model-file /path/Ornith-....gguf
@@ -137,52 +142,186 @@ The container entrypoint is `docker/entrypoint-ornith.sh`. It resolves the singl
 through `docker/hfmodel.py` (generalized so a family describes one or more files), validates the artifact
 with `strata-qwen35-check`, builds the engine config and starts the server.
 
-The engine advertises what it can serve with `strata --capabilities` (one architecture per line).
-`run3.sh` reads it before starting and refuses with an explicit message - and without the ~22 GB download -
-if the build has no `qwen35moe` backend yet. It currently prints `qwen4exp` only; when the backend lands it
-prints `qwen35moe` too and `run3.sh` proceeds.
+The engine advertises `qwen35moe mtp greedy-spec cancellation cpu gpu` through
+`strata-qwen35 --capabilities`. The launcher checks this before preparation. The container validates the
+artifact, writes the server config, checks the memory plan, then starts the same API and web app.
 
-**The launcher is complete and its host side is verified (`--dry-run`, cache resolution, space gate,
-`hfmodel` unit tests), but the engine serve step depends on the execution backend below. Until that
-backend exists, a real `./run3.sh` refuses before the download rather than accepting a model it cannot
-run.** No throughput is claimed for it.
+`--prefill` now reaches the engine. The default is 8; 1 uses single-token prompt processing, and larger
+requests are split into native tiles of at most 8 tokens. The MMVQ projections share weights across the
+tile, routed expert entries are grouped by expert on CPU and GPU, and GDN updates and attention masks
+stay causal. Verification snapshots are assembled per layer after each token, so every accepted prefix
+can be restored without replaying rejected tokens.
+
+The host waits for the router/activation copy event while the shared expert continues on the GPU. Expert
+results and routing plans use pinned host storage. Attention streams eight contiguous value columns
+through a bounded shared-memory tile, retaining the original dot-product order and f16 accumulation.
+The entire prompt's routing counts choose the expert cache placement before decode; it stays fixed
+through speculative verification. Graph capture is available with `STRATA_QWEN35_GRAPHS=1`, but disabled
+by default because its measured run did not improve throughput.
 
 ## Measured on gfx1101
 
-- Full HIP `ctest`: 69/72 registered pass (3 fixture-dependent failures unchanged); the three `qwen35_*` tests
-  pass in the runtime build.
-- Qwen35 layer math: `qwen35_gdn_test` (0 failures) and `qwen35_layers_test` (0 failures) on the host and in
-  the container.
-- **End to end through Strata's server (CPU, no GPU kernels yet):** `./run3.sh --detach` loads the 20 GB
-  `Ornith-1.5-35B-A3B-AD-Q4_K-IQ4_XS.gguf` and `/v1/models` reports
-  `ornith-1.5-35b-a3b-ad-q4-iq4 loaded ctx=131072`.  An OpenAI chat completion
-  ("Reply with exactly: hello world") returns coherent reasoning and the text `hello` at **6.6 tok/s decode,
-  7.5 tok/s prefill** on the Ryzen 9 7900.  This is the untouched CPU path with no GPU kernels, no expert
-  cache and no spec; it exists to prove correctness and integration, not speed - it is slower than
-  `run.sh`/`run2.sh`, and the GPU kernels below are what close that gap.
-- Ornith-dimension Q4_K-down expert parity: 0 failures, down rows bitwise-equal to ggml.
-- The Qwen35MoE guard accepts the real Ornith header and reads back the geometry above.
+### Latest implementation measurement
+
+Evidence: `bench/results/2026-10-02-ornith-optimization/`. RX 7700 XT/gfx1101, Ryzen 9 7900X,
+128 GB RAM, ROCm 7.2.1; main HF revision `7aa8fc1d9b861d797880f4a341166d4bb3439f74`, trained
+Q8_0 draft revision `2e9f6f487b82200f2a045e67d01a3f1e2982b00a`. One warmup excluded, then three
+64-token code prompts, context capacity 131072, f16 KV, automatic expert cache, desktop GPU
+shared with the OS. Each row has one excluded warmup and three timed requests; the benchmark rejects
+any change in greedy tokens between identical sequential requests.
+
+| setting | outputs | workers | median decode tok/s | range | prompt processing |
+|---|---|---|---|---|---|
+| target-only, shipping defaults | 128 | 8 | **52.01** | **51.87-52.02** | 65.2 tok/s |
+| target-only, longer decode | 256 | 8 | **50.64** | **50.26-50.88** | 62.7 tok/s |
+| target-only, 1024-token prompt | 128 | 8 | 50.56 | 49.88-51.23 | 57.5 tok/s |
+| trained MTP, same 8 workers, spec 1 | 128 | 8 | 49.03 | 47.35-49.24 | 61.3 tok/s |
+| target-only, auto workers | 128 | 11 | 51.24 | 50.99-52.01 | 64.1 tok/s |
+| trained MTP, spec 1 | 128 | 11 | 49.97 | 48.84-50.31 | 61.4 tok/s |
+
+An 8192-token repeated-code diagnostic with 64 outputs measures 40.77 tok/s decode and 50.31 tok/s
+prefill (one run, no excluded warmup). The 50-52 tok/s result applies to the shorter measured prompts,
+not all context lengths.
+
+Prompt timing includes cache placement/refill before decode; warming does not omit that work.
+Target-only uses 2472 expert slots and peaks at 34.74 GiB process RSS. The HIP allocation guard reports
+8.50 GiB explicit allocations; sampled total card VRAM, including desktop/runtime allocations, peaks at
+9.40 GiB in the shipping runs. MTP spec 1 uses 1855 slots and 36.90 GiB RSS. Its warm draft acceptance is
+59/69 (85.5%) on each request. Checkpoint storage scales with the configured draft length.
+
+Earlier tuning folders in the evidence directory are provisional: a cache placement inherited from
+previous requests changed CPU/GPU arithmetic and greedy tokens between repeats. The shipping runs use
+fixed CPU placement during prefill, collect routing counts across the whole prompt, then select and
+freeze GPU cache placement for decode. Identical requests now reproduce identical output. Earlier
+throughput numbers are excluded from the shipping claim.
+
+The causal batch test compares the full vocabulary, hidden vectors and subsequent state bitwise for
+2/3/5/8 tokens, both KV formats, with cache 0/256. All accepted verification prefixes 0..5 match the
+single-token path. The attention memory test compares every output bit against the original value
+reader at 13 lengths from 1 through 65537, both KV formats. Independent upstream HIP primitives and
+full-model reference comparisons pass. Longer-context capacity and filled-context quality remain
+distinct checks; the latest throughput row does not establish a 128K needle test.
+
+The table below records the earlier implementation, before causal batching and prompt cache placement.
+
+### Throughput
+
+All rows: RX 7700 XT (gfx1101, 12 272 MiB), 10 240 MiB Strata budget, Ryzen 9 7900X (24 threads),
+`tools/qwen35_bench.py` against the built `strata-qwen35`, the 64-token code prompt from
+`tools/qwen35_parity.py` (regenerated from the tokenizer, so the prompts are the same ones the parity runs
+used), 128 tokens generated, median of 3 runs with the range in brackets, `--spec 0` unless stated, warm
+page cache.  `auto` is the cache size the engine itself derived from the bytes free at that moment.
+
+| tier | KV | expert cache | workers | context | decode tok/s |
+|---|---|---|---|---|---|
+| cpu | - | - | 12 | 131072 | 9.08 (8.98-9.14) |
+| gpu | f32 | 0 | 12 | 131072 | 25.97 (25.48-26.17) |
+| gpu | f16 | 0 | 12 | 131072 | 26.46 (26.36-26.99) |
+| gpu | f32 | auto | 12 | 131072 | 29.28 (28.90-29.38), measured 2026-10-02 |
+| gpu | f16 | auto = 2477 | 12 | 131072 | 37.80 (36.65-38.54) |
+| gpu | f16 | auto = 2477 | 8 | 131072 | 40.42 (40.42-40.57) |
+| gpu | f16 | auto = 2477 | 10 | 131072 | 40.68 (40.60-40.68) |
+| gpu | f16 | auto = 2477 | 11 | 131072 | **41.10** (41.04-41.15) |
+| gpu | f16 | 2048 fixed | 12 | 131072 | 30.46 (29.19-36.02) |
+| gpu | f16 | auto = 2627 | 11 | 8192 | **46.48** (46.35-46.73) |
+| gpu | f16 | auto = 2477 | 11 | 32768 | 38.63 (38.63-40.55) |
+| gpu | f16 | auto = 1745 + MTP | 12 | 131072 | spec 2: 24.09 (23.51-24.65), spec 3: 20.42, spec 4: 17.12 |
+
+What the numbers say:
+
+- **The KV format is the biggest single lever**, because on a 12 GB card the KV's bytes are cache slots:
+  f16 KV at context 131072 leaves room for 2488 expert slots where f32 leaves 913, and the same run goes
+  from 26.0 to 41.1 tok/s.  f16 and f32 both have reference parity (`logits relative_rms=0`, top-10 overlap
+  10/10, `top1 2/2` on the code prompt at context 8192), and the launcher offers only these two.
+- **The cache pays, and `auto` beats a fixed number.** 2477 slots measured 43% hits (87159 of 202880 expert
+  positions in a server run).  An explicit 2048 in the same session measured *fewer* hits (42%) and 30.5
+  tok/s; that ordering is not explained by the per-layer slot split and is recorded here as unexplained -
+  `auto` is the default, and no fixed default is offered until it is understood.
+- **Worker count is flat between 8 and 11 and worse at 12** (41.1 vs 37.8): the pool's workers spin, so the
+  engine's own thread needs a core.  The engine's auto setting picks 11 here, which is why `--pool-workers`
+  is left at 0 by the launcher.
+- **Context cost less than the run-to-run spread in this session** (41.1 at 131072 vs 38.6 at 32768 vs 46.5
+  at 8192): the desktop's own VRAM use moves the cache size between runs, so short-context superiority is
+  real in direction but not clean in size.  The f32-to-f16 gain above is far outside that noise.
+- **Speculation is a loss today even though the draft is good** (72% acceptance: 75 of 104 proposed tokens
+  accepted on the code prompt, in the range public Qwen3.6-MTP testing reports).  Verifying a draft token
+  costs a whole trunk pass, and the CPU expert work does not amortise over the tokens being verified, so
+  `--spec 2` costs ~3 single-token passes for 1.72 tokens out.  The fix is the multi-token pass below, not
+  a different draft.
+- Run-to-run spread across containers in this session was up to ±10% (the card is shared with a desktop);
+  the medians in brackets are within-run.
+
+### Earlier end-to-end server measurement
+
+`./run3.sh --detach` loads the 20 GB `Ornith-1.5-35B-A3B-AD-Q4_K-IQ4_XS.gguf` and `/v1/models` reports
+`ornith-1.5-35b-a3b-ad-q4-iq4 loaded ctx=131072`.  A 128-token chat completion on a 23-token prompt took
+3.86 s and 3.80 s - **33.1 and 33.6 tok/s wall**, prompt processing included; the same model with the same
+tier measured 41.1 tok/s decode-only in the bench, so ~20% of the wall time is prompt processing and server
+overhead.  A 204-token prompt took 8.6 s wall, the same 128 tokens: prompt processing is one token at a
+time at 45-55 tok/s, which is what makes long prompts feel slow even when decode is fast.
+
+### Earlier allocation report
+
+`strata-qwen35 --fit-report --gpu` at context 131072 with the 10 240 MiB budget (8.750 GiB admissible after
+the 1024 MiB runtime reserve and 256 MiB slack), expert blob 1.62 MiB, 10 240 expert pairs:
+
+| configuration | dense | GDN state | KV | fixed | slots that fit |
+|---|---|---|---|---|---|
+| f32 KV, no draft | 1.980 GiB | 0.061 GiB | 5.000 GiB | 7.051 GiB | 913 |
+| f16 KV, no draft | 1.980 GiB | 0.061 GiB | 2.500 GiB | 4.551 GiB | 2488 |
+| f16 KV, context 262144, no draft | 1.980 GiB | 0.061 GiB | 5.000 GiB | 7.059 GiB | 908 |
+| f16 KV + trained MTP draft, context 131072 | - | - | - | 5.357 GiB | 1980 |
+
+These rows precede causal batching and the checkpoint allocation correction. The current fit report
+includes the full recurrent-state snapshots and sizes their count as spec + 2; the shipping spec-1
+allocation uses three snapshots. Use `./run3.sh --check-only --spec 1` for the current report.
+
+In the older report the trained draft was counted as 0.806 GiB over the f16 row above.  The session's own report agrees with the plan bit for bit (`planned 8.482 GiB,
+allocated 8.482 GiB`), which is what lets the launcher refuse an impossible combination before the load
+instead of after it: `--expert-cache 4096` at f16/131072 is refused with "4096 expert slots need 6.500 GiB
+of the 4.199 GiB free after the fixed 4.551 GiB", where the session previously died 40 s into the load.  The
+predicted slot count is conservative against what the session actually took (2488 predicted, 2477 taken).
+With f16 the 262144 context fits the same 10 GiB budget with room for 908 expert slots; f32 at 262144 is
+refused - "the dense weights, state and KV alone need 12.059 GiB and 8.750 GiB is free" - so run3.sh takes
+262144 as a request and lets the plan say yes or no rather than promising it unconditionally.
+
+### Correctness
+
+- Full HIP CTest: 70 pass, 3 skip, 3 failures across 76 registered tests. The three failures
+  (`ple_parity`, `expert_parity`, `pool_test`) require absent local PLE/expert-pack fixtures and also
+  failed before this work. The real-model batch test skips without a model path; its separate artifact
+  run passes, including both KV formats, cache 0/256, every rollback prefix, repeated requests and cancellation.
+- Independent pinned llama.cpp HIP primitive comparison passes. Native IQ4_XS gate/up and Q4_K down
+  have zero difference; the independent attention comparison has at most 4.2e-7 absolute difference.
+- Independent full-model f32/f16 comparisons over 40 code tokens have zero logits/residual difference.
+  Earlier CPU full-model fixtures through 4096 prompt tokens also have zero logits difference.
+- The attention reader matches the old kernel bitwise at 13 lengths through 65537 for both KV formats.
+- Trained MTP spec 0..4 and forced rejection prefixes 0..4 produce the same 64-token greedy output.
+- Docker artifact/launcher tests: 33 pass. Setup choices: 15 pass. AMD setup: 18 pass.
+- The rebuilt Qwen3.8 image starts through unchanged `run.sh` and returns a chat completion.
 
 ## Remaining work
 
-The phase map from the task, and where this increment stops:
-
-- **Done:** Phase 1 (inspect), Phase 2/3 (architecture identity and guards), Phase 5 (Q4_K down), Phase 6/7/8/9
-  (the GDN, attention, MoE and trunk math, in float), Phase 15 (launcher, host side), Phase 18A/B (unit and HIP
-  primitive tests for the above), Phase 26 (this page).
-- **Next, in order:** the GGUF loader and a quantized matvec backed by ggml-cpu's type traits (so the 35B model
-  stays quantized), then the session/serve wiring so `run3.sh` executes it, then gfx1101 kernels for the new
-  layers, then the external Qwen3.6 MTP and speculative rollback (Phases 10-14), and finally the performance,
-  cache/pool/context and quality phases (16/17/19-25).
-- **Out of scope, explicitly:** DFlash. It is not implemented, not stubbed, and not part of the design.
+- Larger MMQ prefill tiles beyond the native eight-token path, and long-context prefill optimization.
+- Filled 128K/262K needle and quality runs. Capacity 131072 fits and runs in the shipping configuration;
+  262144 is an explicit request subject to the memory fit gate, not a completed long-context quality claim.
+- Broader code, repository, JSON and prose reference sweeps at large filled contexts, and KV-quality sweeps.
+- More efficient MTP verification/draft execution: speculation is correct but still loses to target-only
+  on the measured coding prompt. Default speculation remains off.
+- DFlash is out of scope. The CPU tier still uses the HIP runtime image and requires a visible card.
 
 ## Building and testing
 
 ```
 ./build.sh                    # compile the engine in the HIP builder container and package the image
 ./build.sh --tests            # ... and run the HIP ctest set on the GPU
+python -m unittest discover -s docker -p 'test_*.py'      # launcher + fetch contracts, no GPU needed
 python tools/ornith_inspect.py --repo AtomicChat/Ornith-1.5-35B-A3B-GGUF \
        --file Ornith-1.5-35B-A3B-AD-Q4_K-IQ4_XS.gguf \
        --out docs/ornith/gguf-layout.txt --header-out /tmp/ornith-header.gguf
-strata-qwen35-check /tmp/ornith-header.gguf          # inside the runtime image
+strata-qwen35 --check --model <the GGUF>          # inside the runtime image; --fit-report --gpu adds the plan
 ```
+
+The five `qwen35_*` ctest cases (geometry guard, GDN math, layer math, pool geometry, GPU batch) pass on
+gfx1101 with this build; `run3.sh`'s own contract lives with the other runtime contracts in
+`docker/test_runtime_contract.py`.

@@ -1,0 +1,345 @@
+{
+  "baseline_sha": "8c7030ba89b00ca2a37ffa773a9419925bbd443e",
+  "implementation_sha": "94b93e8200c9f29590b123442012cfb331043716",
+  "hardware": {
+    "gpu": "RX 7700 XT gfx1101",
+    "vram_mib": 12272,
+    "cpu": "Ryzen 9 7900X",
+    "ram_gib": 128,
+    "rocm": "7.2.1"
+  },
+  "model": {
+    "repo": "AtomicChat/Ornith-1.5-35B-A3B-GGUF",
+    "file": "Ornith-1.5-35B-A3B-AD-Q4_K-IQ4_XS.gguf",
+    "revision": "7aa8fc1d9b861d797880f4a341166d4bb3439f74"
+  },
+  "mtp": {
+    "repo": "EryriLabs/Ornith-1.5-35B-A3B-BigBang-MTP-GGUF",
+    "file": "mtpdraft-Q8_0.gguf",
+    "revision": "2e9f6f487b82200f2a045e67d01a3f1e2982b00a"
+  },
+  "defaults": {
+    "tier": "gpu",
+    "kv": "f16",
+    "context_capacity": 131072,
+    "workers": 8,
+    "expert_cache": "auto",
+    "actual_expert_slots": 2472,
+    "spec": 0,
+    "prefill_tile": 8,
+    "vram_budget_mib": 10240
+  },
+  "test_results": {
+    "ctest_pass": 70,
+    "ctest_skip": 3,
+    "ctest_missing_fixture_fail": 3,
+    "fixture_failures": [
+      "ple_parity",
+      "expert_parity",
+      "pool_test"
+    ],
+    "artifact_batch_rollback": "PASS bitwise",
+    "upstream_gpu_full_model": "PASS zero difference f32/f16 40 code tokens",
+    "upstream_hip_primitives": "PASS",
+    "spec_0_to_4_and_forced_rejection": "PASS 64 greedy tokens",
+    "docker_tests": 33,
+    "setup_choices": 15,
+    "setup_amd": 18,
+    "qwen38_api_smoke": "PASS",
+    "ornith_api_smoke": "PASS chat code, identical greedy repeats, SSE, disconnect/cancel recovery, image rejection, Anthropic"
+  },
+  "benchmark": [
+    {
+      "evidence": "shipping-128",
+      "config": "gpu:8:auto:f16:0",
+      "prompt_tokens": 64,
+      "generated": 128,
+      "median_tok_s": 52.01395599456779,
+      "min_tok_s": 51.86953191799751,
+      "max_tok_s": 52.02353251978825,
+      "median_prefill_tok_s": 65.2004710734035,
+      "rss_peak_bytes": 37289418752,
+      "device_vram_peak_bytes": 10092036096,
+      "accepted": 0,
+      "proposed": 0,
+      "identical_greedy_repeats": true
+    },
+    {
+      "evidence": "shipping-128",
+      "config": "gpu:11:auto:f16:0",
+      "prompt_tokens": 64,
+      "generated": 128,
+      "median_tok_s": 51.242962099424155,
+      "min_tok_s": 50.99042933543137,
+      "max_tok_s": 52.00548170280574,
+      "median_prefill_tok_s": 64.06611623195137,
+      "rss_peak_bytes": 37289492480,
+      "device_vram_peak_bytes": 9839886336,
+      "accepted": 0,
+      "proposed": 0,
+      "identical_greedy_repeats": true
+    },
+    {
+      "evidence": "shipping-128",
+      "config": "gpu:11:auto:f16:1",
+      "prompt_tokens": 64,
+      "generated": 128,
+      "median_tok_s": 49.97222247164955,
+      "min_tok_s": 48.84276978189414,
+      "max_tok_s": 50.30503321507721,
+      "median_prefill_tok_s": 61.35875119601628,
+      "rss_peak_bytes": 39615762432,
+      "device_vram_peak_bytes": 9912565760,
+      "accepted": 59,
+      "proposed": 69,
+      "identical_greedy_repeats": true
+    },
+    {
+      "evidence": "shipping-256",
+      "config": "gpu:8:auto:f16:0",
+      "prompt_tokens": 64,
+      "generated": 256,
+      "median_tok_s": 50.64176568846293,
+      "min_tok_s": 50.26123078366879,
+      "max_tok_s": 50.88054143256152,
+      "median_prefill_tok_s": 62.698074483353174,
+      "rss_peak_bytes": 37297303552,
+      "device_vram_peak_bytes": 10057449472,
+      "accepted": 0,
+      "proposed": 0,
+      "identical_greedy_repeats": true
+    },
+    {
+      "evidence": "shipping-mtp-8",
+      "config": "gpu:8:auto:f16:1",
+      "prompt_tokens": 64,
+      "generated": 128,
+      "median_tok_s": 49.02704301050557,
+      "min_tok_s": 47.35466833789184,
+      "max_tok_s": 49.23991649217913,
+      "median_prefill_tok_s": 61.276035134146646,
+      "rss_peak_bytes": 39615152128,
+      "device_vram_peak_bytes": 10068246528,
+      "accepted": 59,
+      "proposed": 69,
+      "identical_greedy_repeats": true
+    },
+    {
+      "evidence": "shipping-1k",
+      "config": "gpu:8:auto:f16:0",
+      "prompt_tokens": 1024,
+      "generated": 128,
+      "median_tok_s": 50.559911520154834,
+      "min_tok_s": 49.88425294434008,
+      "max_tok_s": 51.22905712119915,
+      "median_prefill_tok_s": 57.481494354941155,
+      "rss_peak_bytes": 37269622784,
+      "device_vram_peak_bytes": 9883881472,
+      "accepted": 0,
+      "proposed": 0,
+      "identical_greedy_repeats": true
+    }
+  ],
+  "context_checks": {
+    "shipping_capacity": 131072,
+    "earlier_upstream_cpu_full_model_prompt": 4096,
+    "attention_kernel_bitwise_max_length": 65537,
+    "filled_32k_128k_256k": "not measured; no needle/quality claim",
+    "filled_8k": {
+      "command": [
+        "docker",
+        "exec",
+        "-i",
+        "strata-ornith-opt",
+        "/src/build-hip/strata-qwen35",
+        "--serve",
+        "--model",
+        "/models/models--AtomicChat--Ornith-1.5-35B-A3B-GGUF/snapshots/7aa8fc1d9b861d797880f4a341166d4bb3439f74/Ornith-1.5-35B-A3B-AD-Q4_K-IQ4_XS.gguf",
+        "--gpu",
+        "--kv",
+        "f16",
+        "--expert-cache",
+        "auto",
+        "--pool-workers",
+        "8",
+        "--max-context",
+        "131072",
+        "--spec",
+        "0"
+      ],
+      "prompt_tokens": 8192,
+      "generated": 64,
+      "prefill_ms": 162843.287,
+      "decode_ms": 1569.943,
+      "tokens": [
+        320,
+        9988,
+        411,
+        7873,
+        321,
+        10033,
+        1204,
+        310,
+        4884,
+        279,
+        6741,
+        13,
+        198,
+        1005,
+        5374,
+        7315,
+        313,
+        198,
+        262,
+        1407,
+        476,
+        21670,
+        29851,
+        26,
+        198,
+        262,
+        1407,
+        476,
+        8783,
+        14214,
+        5354,
+        26,
+        198,
+        262,
+        1407,
+        476,
+        51703,
+        7797,
+        476,
+        1628,
+        16461,
+        363,
+        2372,
+        14836,
+        26,
+        198,
+        262,
+        1744,
+        21835,
+        283,
+        867,
+        26,
+        198,
+        860,
+        25,
+        198,
+        262,
+        715,
+        9042,
+        5029,
+        476,
+        1628,
+        16461,
+        20957
+      ],
+      "repeat_count": 1,
+      "warmup_excluded": false,
+      "tok_s": 40.76581124282856,
+      "prefill_tok_s": 50.30603441454728,
+      "elapsed_seconds": 172.747014603985
+    }
+  },
+  "limitations": [
+    "Larger MMQ tiles and long-context prefill optimization remain.",
+    "Filled 128K/256K quality and broad agentic coding evaluation remain.",
+    "MTP is correct but slower on the measured prompt.",
+    "CUDA/NVIDIA was not tested on this AMD machine."
+  ],
+  "api_smoke": {
+    "models": {
+      "object": "list",
+      "data": [
+        {
+          "id": "ornith-1.5-35b-a3b-ad-q4-iq4",
+          "object": "model",
+          "status": {
+            "value": "loaded"
+          },
+          "meta": {
+            "n_ctx": 131072
+          },
+          "architecture": {
+            "input_modalities": [
+              "text"
+            ],
+            "output_modalities": [
+              "text"
+            ]
+          }
+        }
+      ]
+    },
+    "chat_wall_seconds": 1.2603418219950981,
+    "chat": {
+      "id": "chatcmpl-d7d5fc003812424098c02a50",
+      "object": "chat.completion",
+      "created": 1790998941,
+      "model": "ornith-1.5-35b-a3b-ad-q4-iq4",
+      "choices": [
+        {
+          "index": 0,
+          "message": {
+            "role": "assistant",
+            "content": "```python\ndef add(a, b):\n    return a + b\n```"
+          },
+          "finish_reason": "length"
+        }
+      ],
+      "usage": {
+        "prompt_tokens": 31,
+        "completion_tokens": 17,
+        "total_tokens": 48,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        }
+      },
+      "timings": {
+        "cache_n": 0,
+        "prompt_n": 31,
+        "prompt_ms": 905.1,
+        "prompt_per_token_ms": 29.198,
+        "prompt_per_second": 34.2,
+        "predicted_n": 17,
+        "predicted_ms": 352.6,
+        "predicted_per_token_ms": 20.738,
+        "predicted_per_second": 48.2,
+        "draft_n": 0,
+        "draft_n_accepted": 0
+      }
+    },
+    "identical_repeats": true,
+    "stream_chunks": 17,
+    "cancelled_stream": true,
+    "cancel_recovery_identical": true,
+    "image_rejection": {
+      "status": 400,
+      "body": "{\"error\": {\"type\": \"invalid_request_error\", \"message\": \"this server was started without the vision encoder (run setup again and choose 'vision'), so it cannot read images\"}}"
+    },
+    "anthropic": {
+      "id": "msg_1b7ce963af6f4500b5370d37",
+      "type": "message",
+      "role": "assistant",
+      "model": "ornith-1.5-35b-a3b-ad-q4-iq4",
+      "content": [
+        {
+          "type": "thinking",
+          "thinking": "The user is asking me to say hello. This is a simple, friendly greeting",
+          "signature": ""
+        }
+      ],
+      "stop_reason": "max_tokens",
+      "stop_sequence": null,
+      "usage": {
+        "input_tokens": 13,
+        "output_tokens": 16,
+        "cache_read_input_tokens": 0
+      }
+    }
+  },
+  "runtime_image": "sha256:357a99e2013faea8a73db899b07561dcb451db6fa452574445e0ebee1a3b5a5f"
+}

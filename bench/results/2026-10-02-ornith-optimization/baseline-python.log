@@ -1,0 +1,14 @@
+.........ornith_fetch: downloading AtomicChat/Ornith-1.5-35B-A3B-GGUF/Ornith-1.5-35B-A3B-AD-Q4_K-IQ4_XS.gguf (resumable)
+ornith_fetch: downloading EryriLabs/Ornith-1.5-35B-A3B-BigBang-MTP-GGUF/mtpdraft-Q8_0.gguf (resumable)
+...ornith_fetch: downloading AtomicChat/Ornith-1.5-35B-A3B-GGUF/Ornith-1.5-35B-A3B-AD-Q4_K-IQ4_XS.gguf (resumable)
+ornith_fetch: downloading EryriLabs/Ornith-1.5-35B-A3B-BigBang-MTP-GGUF/mtpdraft-Q8_0.gguf (resumable)
+.ornith_fetch: downloading AtomicChat/Ornith-1.5-35B-A3B-GGUF/Ornith-1.5-35B-A3B-AD-Q4_K-IQ4_XS.gguf (resumable)
+ornith_fetch: downloading EryriLabs/Ornith-1.5-35B-A3B-BigBang-MTP-GGUF/mtpdraft-Q8_0.gguf (resumable)
+..ornith_fetch: downloading AtomicChat/Ornith-1.5-35B-A3B-GGUF/Ornith-1.5-35B-A3B-AD-Q4_K-IQ4_XS.gguf (resumable)
+ornith_fetch: downloading AtomicChat/Ornith-1.5-35B-A3B-GGUF/Ornith-1.5-35B-A3B-AD-Q4_K-IQ4_XS.gguf (resumable)
+..ornith_fetch: downloading AtomicChat/Ornith-1.5-35B-A3B-GGUF/Ornith-1.5-35B-A3B-AD-Q4_K-IQ4_XS.gguf (resumable)
+................
+----------------------------------------------------------------------
+Ran 33 tests in 0.454s
+
+OK

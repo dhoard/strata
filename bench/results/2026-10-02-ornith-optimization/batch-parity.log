@@ -1,0 +1,35 @@
+HIP budget: 10240 MiB ceiling, 1024 MiB runtime reserve, 256 MiB slack; explicit allocations capped at 8960 MiB
+qwen35 resident GPU: KV=f32 slots=0 workers=11 dense/state ready; CPU expert backing 16.250 GiB
+qwen35 GPU plan: dense=1.980 GiB gdn=0.061 GiB kv=0.020 GiB scratch=0.010 GiB; planned 2.071 GiB, allocated 2.071 GiB
+qwen35 GPU totals: hits=0 misses=16640 CPU=614.181 ms GPU-wait=454.057 ms
+qwen35 transfers: activation D2H=17105920 parts H2D=136314880 cache H2D=0 bytes
+qwen35 resident GPU: KV=f32 slots=256 workers=11 dense/state ready; CPU expert backing 16.250 GiB
+qwen35 GPU plan: dense=1.980 GiB gdn=0.061 GiB kv=0.020 GiB scratch=0.010 GiB; planned 2.478 GiB, allocated 2.478 GiB
+qwen35 GPU totals: hits=3645 misses=12995 CPU=430.338 ms GPU-wait=427.663 ms
+qwen35 transfers: activation D2H=17105920 parts H2D=106455040 cache H2D=436207616 bytes
+qwen35 resident GPU: KV=f16 slots=0 workers=11 dense/state ready; CPU expert backing 16.250 GiB
+qwen35 GPU plan: dense=1.980 GiB gdn=0.061 GiB kv=0.010 GiB scratch=0.010 GiB; planned 2.062 GiB, allocated 2.062 GiB
+qwen35 GPU totals: hits=0 misses=16640 CPU=637.797 ms GPU-wait=440.312 ms
+qwen35 transfers: activation D2H=17105920 parts H2D=136314880 cache H2D=0 bytes
+qwen35 resident GPU: KV=f16 slots=256 workers=11 dense/state ready; CPU expert backing 16.250 GiB
+qwen35 GPU plan: dense=1.980 GiB gdn=0.061 GiB kv=0.010 GiB scratch=0.010 GiB; planned 2.468 GiB, allocated 2.468 GiB
+qwen35 GPU totals: hits=3693 misses=12947 CPU=447.441 ms GPU-wait=428.076 ms
+qwen35 transfers: activation D2H=17105920 parts H2D=106061824 cache H2D=436207616 bytes
+HIP budget: device 0 tracked peak 2679046144 bytes
+kv=f32 slots=0 batch=2 logits/hidden/state bitwise equal
+kv=f32 slots=0 batch=3 logits/hidden/state bitwise equal
+kv=f32 slots=0 batch=5 logits/hidden/state bitwise equal
+kv=f32 slots=0 batch=8 logits/hidden/state bitwise equal
+kv=f32 slots=256 batch=2 logits/hidden/state bitwise equal
+kv=f32 slots=256 batch=3 logits/hidden/state bitwise equal
+kv=f32 slots=256 batch=5 logits/hidden/state bitwise equal
+kv=f32 slots=256 batch=8 logits/hidden/state bitwise equal
+kv=f16 slots=0 batch=2 logits/hidden/state bitwise equal
+kv=f16 slots=0 batch=3 logits/hidden/state bitwise equal
+kv=f16 slots=0 batch=5 logits/hidden/state bitwise equal
+kv=f16 slots=0 batch=8 logits/hidden/state bitwise equal
+kv=f16 slots=256 batch=2 logits/hidden/state bitwise equal
+kv=f16 slots=256 batch=3 logits/hidden/state bitwise equal
+kv=f16 slots=256 batch=5 logits/hidden/state bitwise equal
+kv=f16 slots=256 batch=8 logits/hidden/state bitwise equal
+Qwen35 causal batch/rollback PASS

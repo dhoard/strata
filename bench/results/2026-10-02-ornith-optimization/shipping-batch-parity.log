@@ -1,0 +1,63 @@
+HIP budget: 10240 MiB ceiling, 1024 MiB runtime reserve, 256 MiB slack; explicit allocations capped at 8960 MiB
+qwen35 resident GPU: KV=f32 slots=0 workers=11 dense/state ready; CPU expert backing 16.250 GiB
+qwen35 GPU plan: dense=2.524 GiB gdn=0.061 GiB kv=0.021 GiB scratch=0.378 GiB; planned 2.985 GiB, allocated 2.985 GiB
+qwen35 GPU totals: hits=0 misses=72560 CPU=2380.018 ms GPU-wait=1934.976 ms
+qwen35 transfers: activation D2H=74591680 parts H2D=594411520 cache H2D=0 bytes
+qwen35 resident GPU: KV=f32 slots=256 workers=11 dense/state ready; CPU expert backing 16.250 GiB
+qwen35 GPU plan: dense=2.524 GiB gdn=0.061 GiB kv=0.021 GiB scratch=0.378 GiB; planned 3.391 GiB, allocated 3.391 GiB
+qwen35 GPU totals: hits=22960 misses=49600 CPU=1727.708 ms GPU-wait=1875.863 ms
+qwen35 transfers: activation D2H=74591680 parts H2D=406323200 cache H2D=1744830464 bytes
+qwen35 resident GPU: KV=f16 slots=0 workers=11 dense/state ready; CPU expert backing 16.250 GiB
+qwen35 GPU plan: dense=2.524 GiB gdn=0.061 GiB kv=0.011 GiB scratch=0.378 GiB; planned 2.974 GiB, allocated 2.974 GiB
+qwen35 GPU totals: hits=0 misses=72560 CPU=2409.926 ms GPU-wait=1917.011 ms
+qwen35 transfers: activation D2H=74591680 parts H2D=594411520 cache H2D=0 bytes
+qwen35 resident GPU: KV=f16 slots=256 workers=11 dense/state ready; CPU expert backing 16.250 GiB
+qwen35 GPU plan: dense=2.524 GiB gdn=0.061 GiB kv=0.011 GiB scratch=0.378 GiB; planned 3.380 GiB, allocated 3.380 GiB
+qwen35 GPU totals: hits=23138 misses=49422 CPU=1753.910 ms GPU-wait=1857.587 ms
+qwen35 transfers: activation D2H=74591680 parts H2D=404865024 cache H2D=1744830464 bytes
+HIP budget: device 0 tracked peak 3660513280 bytes
+kv=f32 slots=0 batch=2 logits/hidden/state bitwise equal
+kv=f32 slots=0 batch=3 logits/hidden/state bitwise equal
+kv=f32 slots=0 batch=5 logits/hidden/state bitwise equal
+kv=f32 slots=0 batch=8 logits/hidden/state bitwise equal
+kv=f32 slots=0 accepted=0 rollback bitwise equal
+kv=f32 slots=0 accepted=1 rollback bitwise equal
+kv=f32 slots=0 accepted=2 rollback bitwise equal
+kv=f32 slots=0 accepted=3 rollback bitwise equal
+kv=f32 slots=0 accepted=4 rollback bitwise equal
+kv=f32 slots=0 accepted=5 rollback bitwise equal
+kv=f32 slots=0 repeated requests/spec/cancellation bitwise equal
+kv=f32 slots=256 batch=2 logits/hidden/state bitwise equal
+kv=f32 slots=256 batch=3 logits/hidden/state bitwise equal
+kv=f32 slots=256 batch=5 logits/hidden/state bitwise equal
+kv=f32 slots=256 batch=8 logits/hidden/state bitwise equal
+kv=f32 slots=256 accepted=0 rollback bitwise equal
+kv=f32 slots=256 accepted=1 rollback bitwise equal
+kv=f32 slots=256 accepted=2 rollback bitwise equal
+kv=f32 slots=256 accepted=3 rollback bitwise equal
+kv=f32 slots=256 accepted=4 rollback bitwise equal
+kv=f32 slots=256 accepted=5 rollback bitwise equal
+kv=f32 slots=256 repeated requests/spec/cancellation bitwise equal
+kv=f16 slots=0 batch=2 logits/hidden/state bitwise equal
+kv=f16 slots=0 batch=3 logits/hidden/state bitwise equal
+kv=f16 slots=0 batch=5 logits/hidden/state bitwise equal
+kv=f16 slots=0 batch=8 logits/hidden/state bitwise equal
+kv=f16 slots=0 accepted=0 rollback bitwise equal
+kv=f16 slots=0 accepted=1 rollback bitwise equal
+kv=f16 slots=0 accepted=2 rollback bitwise equal
+kv=f16 slots=0 accepted=3 rollback bitwise equal
+kv=f16 slots=0 accepted=4 rollback bitwise equal
+kv=f16 slots=0 accepted=5 rollback bitwise equal
+kv=f16 slots=0 repeated requests/spec/cancellation bitwise equal
+kv=f16 slots=256 batch=2 logits/hidden/state bitwise equal
+kv=f16 slots=256 batch=3 logits/hidden/state bitwise equal
+kv=f16 slots=256 batch=5 logits/hidden/state bitwise equal
+kv=f16 slots=256 batch=8 logits/hidden/state bitwise equal
+kv=f16 slots=256 accepted=0 rollback bitwise equal
+kv=f16 slots=256 accepted=1 rollback bitwise equal
+kv=f16 slots=256 accepted=2 rollback bitwise equal
+kv=f16 slots=256 accepted=3 rollback bitwise equal
+kv=f16 slots=256 accepted=4 rollback bitwise equal
+kv=f16 slots=256 accepted=5 rollback bitwise equal
+kv=f16 slots=256 repeated requests/spec/cancellation bitwise equal
+Qwen35 causal batch/rollback PASS

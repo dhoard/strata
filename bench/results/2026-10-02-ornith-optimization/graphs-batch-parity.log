@@ -1,0 +1,59 @@
+HIP budget: 10240 MiB ceiling, 1024 MiB runtime reserve, 256 MiB slack; explicit allocations capped at 8960 MiB
+qwen35 resident GPU: KV=f32 slots=0 workers=11 dense/state ready; CPU expert backing 16.250 GiB
+qwen35 GPU plan: dense=2.524 GiB gdn=0.061 GiB kv=0.021 GiB scratch=0.378 GiB; planned 2.985 GiB, allocated 2.985 GiB
+qwen35 GPU totals: hits=0 misses=38720 CPU=1339.904 ms GPU-wait=963.541 ms
+qwen35 transfers: activation D2H=39804160 parts H2D=317194240 cache H2D=0 bytes
+qwen35 resident GPU: KV=f32 slots=256 workers=11 dense/state ready; CPU expert backing 16.250 GiB
+qwen35 GPU plan: dense=2.524 GiB gdn=0.061 GiB kv=0.021 GiB scratch=0.378 GiB; planned 3.391 GiB, allocated 3.391 GiB
+qwen35 GPU totals: hits=8635 misses=30085 CPU=1083.195 ms GPU-wait=948.648 ms
+qwen35 transfers: activation D2H=39804160 parts H2D=246456320 cache H2D=436207616 bytes
+qwen35 resident GPU: KV=f16 slots=0 workers=11 dense/state ready; CPU expert backing 16.250 GiB
+qwen35 GPU plan: dense=2.524 GiB gdn=0.061 GiB kv=0.011 GiB scratch=0.378 GiB; planned 2.974 GiB, allocated 2.974 GiB
+qwen35 GPU totals: hits=0 misses=38720 CPU=1295.868 ms GPU-wait=948.109 ms
+qwen35 transfers: activation D2H=39804160 parts H2D=317194240 cache H2D=0 bytes
+qwen35 resident GPU: KV=f16 slots=256 workers=11 dense/state ready; CPU expert backing 16.250 GiB
+qwen35 GPU plan: dense=2.524 GiB gdn=0.061 GiB kv=0.011 GiB scratch=0.378 GiB; planned 3.380 GiB, allocated 3.380 GiB
+qwen35 GPU totals: hits=8759 misses=29961 CPU=1153.979 ms GPU-wait=1005.041 ms
+qwen35 transfers: activation D2H=39804160 parts H2D=245440512 cache H2D=436207616 bytes
+HIP budget: device 0 tracked peak 3660513280 bytes
+kv=f32 slots=0 batch=2 logits/hidden/state bitwise equal
+kv=f32 slots=0 batch=3 logits/hidden/state bitwise equal
+kv=f32 slots=0 batch=5 logits/hidden/state bitwise equal
+kv=f32 slots=0 batch=8 logits/hidden/state bitwise equal
+kv=f32 slots=0 accepted=0 rollback bitwise equal
+kv=f32 slots=0 accepted=1 rollback bitwise equal
+kv=f32 slots=0 accepted=2 rollback bitwise equal
+kv=f32 slots=0 accepted=3 rollback bitwise equal
+kv=f32 slots=0 accepted=4 rollback bitwise equal
+kv=f32 slots=0 accepted=5 rollback bitwise equal
+kv=f32 slots=256 batch=2 logits/hidden/state bitwise equal
+kv=f32 slots=256 batch=3 logits/hidden/state bitwise equal
+kv=f32 slots=256 batch=5 logits/hidden/state bitwise equal
+kv=f32 slots=256 batch=8 logits/hidden/state bitwise equal
+kv=f32 slots=256 accepted=0 rollback bitwise equal
+kv=f32 slots=256 accepted=1 rollback bitwise equal
+kv=f32 slots=256 accepted=2 rollback bitwise equal
+kv=f32 slots=256 accepted=3 rollback bitwise equal
+kv=f32 slots=256 accepted=4 rollback bitwise equal
+kv=f32 slots=256 accepted=5 rollback bitwise equal
+kv=f16 slots=0 batch=2 logits/hidden/state bitwise equal
+kv=f16 slots=0 batch=3 logits/hidden/state bitwise equal
+kv=f16 slots=0 batch=5 logits/hidden/state bitwise equal
+kv=f16 slots=0 batch=8 logits/hidden/state bitwise equal
+kv=f16 slots=0 accepted=0 rollback bitwise equal
+kv=f16 slots=0 accepted=1 rollback bitwise equal
+kv=f16 slots=0 accepted=2 rollback bitwise equal
+kv=f16 slots=0 accepted=3 rollback bitwise equal
+kv=f16 slots=0 accepted=4 rollback bitwise equal
+kv=f16 slots=0 accepted=5 rollback bitwise equal
+kv=f16 slots=256 batch=2 logits/hidden/state bitwise equal
+kv=f16 slots=256 batch=3 logits/hidden/state bitwise equal
+kv=f16 slots=256 batch=5 logits/hidden/state bitwise equal
+kv=f16 slots=256 batch=8 logits/hidden/state bitwise equal
+kv=f16 slots=256 accepted=0 rollback bitwise equal
+kv=f16 slots=256 accepted=1 rollback bitwise equal
+kv=f16 slots=256 accepted=2 rollback bitwise equal
+kv=f16 slots=256 accepted=3 rollback bitwise equal
+kv=f16 slots=256 accepted=4 rollback bitwise equal
+kv=f16 slots=256 accepted=5 rollback bitwise equal
+Qwen35 causal batch/rollback PASS

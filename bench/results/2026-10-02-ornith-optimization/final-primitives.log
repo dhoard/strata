@@ -1,0 +1,107 @@
+ggml_cuda_init: found 2 ROCm devices (Total VRAM: 74955 MiB):
+  Device 0: AMD Radeon RX 7700 XT, gfx1101 (0x1101), VMM: no, Wave Size: 32, VRAM: 12272 MiB
+  Device 1: AMD Ryzen 9 7900 12-Core Processor, gfx1036 (0x1036), VMM: no, Wave Size: 32, VRAM: 62683 MiB
+HIP budget: 10240 MiB ceiling, 1024 MiB runtime reserve, 256 MiB slack; explicit allocations capped at 8960 MiB
+L2 n=4096 max_abs=0 rms=0 relative_rms=0 worst=0
+GDN SiLU output n=4096 max_abs=0 rms=0 relative_rms=0 worst=0
+softplus gate n=32 max_abs=0 rms=0 relative_rms=0 worst=0
+beta sigmoid n=32 max_abs=0 rms=0 relative_rms=0 worst=0
+conv raw n=8192 max_abs=0 rms=0 relative_rms=0 worst=0
+conv SiLU n=8192 max_abs=0 rms=0 relative_rms=0 worst=0
+weighted RMS n=2048 max_abs=0 rms=0 relative_rms=0 worst=0
+weighted RMS n=4096 max_abs=0 rms=0 relative_rms=0 worst=0
+weighted RMS n=32768 max_abs=0 rms=0 relative_rms=0 worst=0
+GDN readout n=4096 max_abs=0 rms=0 relative_rms=0 worst=0
+GDN state n=524288 max_abs=0 rms=0 relative_rms=0 worst=0
+GDN readout n=4096 max_abs=0 rms=0 relative_rms=0 worst=0
+GDN state n=524288 max_abs=0 rms=0 relative_rms=0 worst=0
+GDN readout n=4096 max_abs=0 rms=0 relative_rms=0 worst=0
+GDN state n=524288 max_abs=0 rms=0 relative_rms=0 worst=0
+GDN readout n=4096 max_abs=0 rms=0 relative_rms=0 worst=0
+GDN state n=524288 max_abs=0 rms=0 relative_rms=0 worst=0
+GDN readout n=4096 max_abs=0 rms=0 relative_rms=0 worst=0
+GDN state n=524288 max_abs=0 rms=0 relative_rms=0 worst=0
+GDN readout n=4096 max_abs=0 rms=0 relative_rms=0 worst=0
+GDN state n=524288 max_abs=0 rms=0 relative_rms=0 worst=0
+GDN readout n=4096 max_abs=0 rms=0 relative_rms=0 worst=0
+GDN state n=524288 max_abs=0 rms=0 relative_rms=0 worst=0
+GDN readout n=4096 max_abs=0 rms=0 relative_rms=0 worst=0
+GDN state n=524288 max_abs=0 rms=0 relative_rms=0 worst=0
+GDN readout n=4096 max_abs=0 rms=0 relative_rms=0 worst=0
+GDN state n=524288 max_abs=0 rms=0 relative_rms=0 worst=0
+GDN readout n=4096 max_abs=0 rms=0 relative_rms=0 worst=0
+GDN state n=524288 max_abs=0 rms=0 relative_rms=0 worst=0
+GDN readout n=4096 max_abs=0 rms=0 relative_rms=0 worst=0
+GDN state n=524288 max_abs=0 rms=0 relative_rms=0 worst=0
+GDN readout n=4096 max_abs=0 rms=0 relative_rms=0 worst=0
+GDN state n=524288 max_abs=0 rms=0 relative_rms=0 worst=0
+GDN readout n=4096 max_abs=0 rms=0 relative_rms=0 worst=0
+GDN state n=524288 max_abs=0 rms=0 relative_rms=0 worst=0
+GDN readout n=4096 max_abs=0 rms=0 relative_rms=0 worst=0
+GDN state n=524288 max_abs=0 rms=0 relative_rms=0 worst=0
+GDN readout n=4096 max_abs=0 rms=0 relative_rms=0 worst=0
+GDN state n=524288 max_abs=0 rms=0 relative_rms=0 worst=0
+GDN readout n=4096 max_abs=0 rms=0 relative_rms=0 worst=0
+GDN state n=524288 max_abs=0 rms=0 relative_rms=0 worst=0
+GDN readout n=4096 max_abs=0 rms=0 relative_rms=0 worst=0
+GDN state n=524288 max_abs=0 rms=0 relative_rms=0 worst=0
+GDN readout n=4096 max_abs=0 rms=0 relative_rms=0 worst=0
+GDN state n=524288 max_abs=0 rms=0 relative_rms=0 worst=0
+GDN readout n=4096 max_abs=0 rms=0 relative_rms=0 worst=0
+GDN state n=524288 max_abs=0 rms=0 relative_rms=0 worst=0
+GDN readout n=4096 max_abs=0 rms=0 relative_rms=0 worst=0
+GDN state n=524288 max_abs=0 rms=0 relative_rms=0 worst=0
+GDN readout n=4096 max_abs=0 rms=0 relative_rms=0 worst=0
+GDN state n=524288 max_abs=0 rms=0 relative_rms=0 worst=0
+GDN readout n=4096 max_abs=0 rms=0 relative_rms=0 worst=0
+GDN state n=524288 max_abs=0 rms=0 relative_rms=0 worst=0
+GDN readout n=4096 max_abs=0 rms=0 relative_rms=0 worst=0
+GDN state n=524288 max_abs=0 rms=0 relative_rms=0 worst=0
+GDN readout n=4096 max_abs=0 rms=0 relative_rms=0 worst=0
+GDN state n=524288 max_abs=0 rms=0 relative_rms=0 worst=0
+GDN readout n=4096 max_abs=0 rms=0 relative_rms=0 worst=0
+GDN state n=524288 max_abs=0 rms=0 relative_rms=0 worst=0
+GDN readout n=4096 max_abs=0 rms=0 relative_rms=0 worst=0
+GDN state n=524288 max_abs=0 rms=0 relative_rms=0 worst=0
+GDN readout n=4096 max_abs=0 rms=0 relative_rms=0 worst=0
+GDN state n=524288 max_abs=0 rms=0 relative_rms=0 worst=0
+GDN readout n=4096 max_abs=0 rms=0 relative_rms=0 worst=0
+GDN state n=524288 max_abs=0 rms=0 relative_rms=0 worst=0
+GDN readout n=4096 max_abs=0 rms=0 relative_rms=0 worst=0
+GDN state n=524288 max_abs=0 rms=0 relative_rms=0 worst=0
+GDN readout n=4096 max_abs=0 rms=0 relative_rms=0 worst=0
+GDN state n=524288 max_abs=0 rms=0 relative_rms=0 worst=0
+GDN readout n=4096 max_abs=0 rms=0 relative_rms=0 worst=0
+GDN state n=524288 max_abs=0 rms=0 relativeHIP budget: device 0 tracked peak 38469632 bytes
+_rms=0 worst=0
+GDN readout n=4096 max_abs=0 rms=0 relative_rms=0 worst=0
+GDN state n=524288 max_abs=0 rms=0 relative_rms=0 worst=0
+IMRoPE n=4096 max_abs=0 rms=0 relative_rms=0 worst=0
+IMRoPE n=4096 max_abs=0 rms=0 relative_rms=0 worst=0
+IMRoPE n=4096 max_abs=0 rms=0 relative_rms=0 worst=0
+IMRoPE n=4096 max_abs=0 rms=0 relative_rms=0 worst=0
+IMRoPE n=4096 max_abs=0 rms=0 relative_rms=0 worst=0
+router weights n=8 max_abs=0 rms=0 relative_rms=0 worst=0
+router weights n=8 max_abs=5.96046448e-08 rms=2.10740674e-08 relative_rms=7.23171553e-08 worst=0
+router weights n=8 max_abs=0 rms=0 relative_rms=0 worst=0
+router weights n=8 max_abs=0 rms=0 relative_rms=0 worst=0
+native MMVQ n=32 max_abs=0 rms=0 relative_rms=0 worst=0
+native MMVQ n=32 max_abs=0 rms=0 relative_rms=0 worst=0
+native MMVQ n=512 max_abs=0 rms=0 relative_rms=0 worst=0
+native MMVQ n=512 max_abs=0 rms=0 relative_rms=0 worst=0
+native MMVQ n=512 max_abs=0 rms=0 relative_rms=0 worst=0
+native MMVQ n=512 max_abs=0 rms=0 relative_rms=0 worst=0
+MoE weighted combine + shared n=2048 max_abs=0 rms=0 relative_rms=0 worst=0
+MoE weighted combine + shared n=2048 max_abs=0 rms=0 relative_rms=0 worst=0
+MoE weighted combine + shared n=2048 max_abs=0 rms=0 relative_rms=0 worst=0
+MoE weighted combine + shared n=2048 max_abs=0 rms=0 relative_rms=0 worst=0
+IQ4_XS/Q4_K grouped experts n=16384 max_abs=0 rms=0 relative_rms=0 worst=0
+IQ4_XS/Q4_K grouped experts n=32768 max_abs=0 rms=0 relative_rms=0 worst=0
+IQ4_XS/Q4_K grouped experts n=65536 max_abs=0 rms=0 relative_rms=0 worst=0
+dense attention n=4096 max_abs=0 rms=0 relative_rms=0 worst=0
+dense attention n=4096 max_abs=0 rms=0 relative_rms=0 worst=0
+dense attention n=4096 max_abs=1.1920929e-07 rms=1.56765715e-08 relative_rms=1.58467452e-07 worst=1241
+dense attention n=4096 max_abs=0 rms=0 relative_rms=0 worst=0
+dense attention n=4096 max_abs=1.63912773e-07 rms=1.66093402e-08 relative_rms=4.14749865e-07 worst=2004
+dense attention n=4096 max_abs=0 rms=0 relative_rms=0 worst=0
+PASS independent HIP primitives

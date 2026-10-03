@@ -1,0 +1,68 @@
+strata-ornith: GPU (HIP index 0): gfx1101
+  HIP budget: 10240 MiB ceiling, 1024 MiB runtime reserve, 256 MiB slack; explicit allocations capped at 8960 MiB
+  device 0: AMD Radeon RX 7700 XT
+    HIP arch            gfx1101 wave32 (compiled for gfx1101)
+strata-ornith: VRAM: 10240 MiB ceiling; runtime reserve 1024 MiB, slack 256 MiB
+strata-ornith: resolving exact main and trained MTP artifacts ...
+strata-ornith: model ornith
+strata-ornith:   gguf=/hf-cache/models--AtomicChat--Ornith-1.5-35B-A3B-GGUF/snapshots/7aa8fc1d9b861d797880f4a341166d4bb3439f74/Ornith-1.5-35B-A3B-AD-Q4_K-IQ4_XS.gguf
+strata-ornith:   mtp=<none>
+strata-ornith: validating the qwen35moe geometry and tensor set ...
+strata-qwen35: 40 layers, 2048 wide, 256 experts top-8, context 131072, trained MTP absent spec 0
+ornith_tokenizer: reusing verified tokenizer /work/tokenizer/ornith
+strata-ornith: wrote /run/strata-ornith.json
+               --serve --model /hf-cache/models--AtomicChat--Ornith-1.5-35B-A3B-GGUF/snapshots/7aa8fc1d9b861d797880f4a341166d4bb3439f74/Ornith-1.5-35B-A3B-AD-Q4_K-IQ4_XS.gguf --max-context 131072 --pool-workers 8 --kv f16 --expert-cache auto --prefill 8 --gpu
+strata-ornith: checking the plan against the 10240 MiB budget ...
+strata-qwen35: 40 layers, 2048 wide, 256 experts top-8, context 131072, trained MTP absent spec 0
+HIP budget: 10240 MiB ceiling, 1024 MiB runtime reserve, 256 MiB slack; explicit allocations capped at 8960 MiB
+qwen35 fit: tier=gpu context=131072 kv=f16 mtp=no
+qwen35 fit: dense=1.980 GiB gdn_state=0.061 GiB kv_cache=2.500 GiB scratch=0.018 GiB
+qwen35 fit: fixed=4.560 GiB; device free=8.750 GiB (budget, runtime reserve and slack already removed)
+qwen35 fit: expert blob=1.62 MiB, slots requested=2483 slots that fit=2483 of 10240 expert pairs
+qwen35 fit: FITS - total 8.500 GiB of 8.750 GiB with 2483 expert slots
+strata-ornith: starting the server on 0.0.0.0:9931 (tier=gpu kv=f16 expert-cache=auto workers=8 spec=0)
+loading the model (the first start takes a minute or two) ...
+[strata] starting the engine: reading the model's weights ...
+ready: http://127.0.0.1:9931/v1  (OpenAI: /v1/chat/completions, Anthropic: /v1/messages, context 131072 tokens)
+       open http://127.0.0.1:9931/ in a browser to chat; close this window to stop the model
+       from other devices: http://172.16.0.3:9931/   (API: http://172.16.0.3:9931/v1)
+       WARNING: no API key - anyone on your network can use this model. Add "api_key": "..." to the config (clients send it as their API key; the web page asks for it)
+[strata] answering: 5 of max 64 tokens, 64.2 tok/s, 1 s
+[strata] done: 17 tokens in 1 s (51.2 tok/s) (length, cancel=False)
+[strata] done: 17 tokens in 1 s (51.9 tok/s) (length, cancel=False)
+[strata] done: 17 tokens in 1 s (51.7 tok/s) (length, cancel=False)
+[strata] done: 0 tokens in 1 s (0.0 tok/s) (cancel, cancel=True)
+[strata] done: 17 tokens in 1 s (51.5 tok/s) (length, cancel=False)
+[strata] done: 16 tokens in 1 s (47.8 tok/s) (length, cancel=False)
+
+[strata] stopping (Ctrl+C again to end the engine at once) ...
+[strata] stopped
+strata-ornith: GPU (HIP index 0): gfx1101
+  HIP budget: 10240 MiB ceiling, 1024 MiB runtime reserve, 256 MiB slack; explicit allocations capped at 8960 MiB
+  device 0: AMD Radeon RX 7700 XT
+    HIP arch            gfx1101 wave32 (compiled for gfx1101)
+strata-ornith: VRAM: 10240 MiB ceiling; runtime reserve 1024 MiB, slack 256 MiB
+strata-ornith: resolving exact main and trained MTP artifacts ...
+strata-ornith: model ornith
+strata-ornith:   gguf=/hf-cache/models--AtomicChat--Ornith-1.5-35B-A3B-GGUF/snapshots/7aa8fc1d9b861d797880f4a341166d4bb3439f74/Ornith-1.5-35B-A3B-AD-Q4_K-IQ4_XS.gguf
+strata-ornith:   mtp=<none>
+strata-ornith: validating the qwen35moe geometry and tensor set ...
+strata-qwen35: 40 layers, 2048 wide, 256 experts top-8, context 131072, trained MTP absent spec 0
+ornith_tokenizer: reusing verified tokenizer /work/tokenizer/ornith
+strata-ornith: wrote /run/strata-ornith.json
+               --serve --model /hf-cache/models--AtomicChat--Ornith-1.5-35B-A3B-GGUF/snapshots/7aa8fc1d9b861d797880f4a341166d4bb3439f74/Ornith-1.5-35B-A3B-AD-Q4_K-IQ4_XS.gguf --max-context 131072 --pool-workers 8 --kv f16 --expert-cache auto --prefill 8 --gpu
+strata-ornith: checking the plan against the 10240 MiB budget ...
+strata-qwen35: 40 layers, 2048 wide, 256 experts top-8, context 131072, trained MTP absent spec 0
+qwen35 fit: tier=gpu context=131072 kv=f16 mtp=no
+qwen35 fit: dense=1.980 GiB gdn_state=0.061 GiB kv_cache=2.500 GiB scratch=0.018 GiB
+qwen35 fit: fixed=4.560 GiB; device free=8.750 GiB (budget, runtime reserve and slack already removed)
+qwen35 fit: expert blob=1.62 MiB, slots requested=2483 slots that fit=2483 of 10240 expert pairs
+qwen35 fit: FITS - total 8.500 GiB of 8.750 GiB with 2483 expert slots
+HIP budget: 10240 MiB ceiling, 1024 MiB runtime reserve, 256 MiB slack; explicit allocations capped at 8960 MiB
+strata-ornith: starting the server on 0.0.0.0:9931 (tier=gpu kv=f16 expert-cache=auto workers=8 spec=0)
+loading the model (the first start takes a minute or two) ...
+[strata] starting the engine: reading the model's weights ...
+ready: http://127.0.0.1:9931/v1  (OpenAI: /v1/chat/completions, Anthropic: /v1/messages, context 131072 tokens)
+       open http://127.0.0.1:9931/ in a browser to chat; close this window to stop the model
+       from other devices: http://172.16.0.3:9931/   (API: http://172.16.0.3:9931/v1)
+       WARNING: no API key - anyone on your network can use this model. Add "api_key": "..." to the config (clients send it as their API key; the web page asks for it)

@@ -1,0 +1,34 @@
+[1;36m==>[0m GPU: gfx1101 (/dev/dri/renderD128), 12272 MiB VRAM; 10240 MiB Strata ceiling
+    allocation guard preserves runtime overhead and slack; cache reserves 768 MiB for later buffers
+[1;36m==>[0m image: strata-hip:gfx1101-latest   container: strata-ornith-gfx1101
+    hint: export HF_HUB_CACHE=/home/dhoard/Development/models  makes 'hf' and this script share one cache
+[1;36m==>[0m HF cache:  /mnt/storage/Development/models  (mounted read-write: a first run may download into it)
+[1;36m==>[0m work dir:  /mnt/storage/Development/strata-work  packs=/mnt/storage/Development/strata-work/packs/ornith-ad-q4-iq4-xs  mtp=/mnt/storage/Development/strata-work/mtp/ornith-qwen36  logs=/mnt/storage/Development/strata-work/logs/ornith
+    ornith is cached
+[1;36m==>[0m starting Ornith on gfx1101 (server on http://127.0.0.1:9931, logs: /mnt/storage/Development/strata-work/logs/ornith/)
+    tier=gpu kv=f16 context=131072 expert-cache=auto spec=1 (external Qwen3.6 MTP)
+    the container first checks the plan against the 10240 MiB budget and refuses what cannot fit
+    first start prepares the ~20 GB model and, with --spec, the ~2 GB trained MTP draft
+strata-ornith: GPU (HIP index 0): gfx1101
+  HIP budget: 10240 MiB ceiling, 1024 MiB runtime reserve, 256 MiB slack; explicit allocations capped at 8960 MiB
+  device 0: AMD Radeon RX 7700 XT
+    HIP arch            gfx1101 wave32 (compiled for gfx1101)
+strata-ornith: VRAM: 10240 MiB ceiling; runtime reserve 1024 MiB, slack 256 MiB
+strata-ornith: resolving exact main and trained MTP artifacts ...
+strata-ornith: model ornith
+strata-ornith:   gguf=/hf-cache/models--AtomicChat--Ornith-1.5-35B-A3B-GGUF/snapshots/7aa8fc1d9b861d797880f4a341166d4bb3439f74/Ornith-1.5-35B-A3B-AD-Q4_K-IQ4_XS.gguf
+strata-ornith:   mtp=/hf-cache/models--EryriLabs--Ornith-1.5-35B-A3B-BigBang-MTP-GGUF/snapshots/2e9f6f487b82200f2a045e67d01a3f1e2982b00a/mtpdraft-Q8_0.gguf
+strata-ornith: validating the qwen35moe geometry and tensor set ...
+strata-qwen35: 40 layers, 2048 wide, 256 experts top-8, context 131072, trained MTP loaded spec 1
+ornith_tokenizer: reusing verified tokenizer /work/tokenizer/ornith
+strata-ornith: wrote /run/strata-ornith.json
+               --serve --model /hf-cache/models--AtomicChat--Ornith-1.5-35B-A3B-GGUF/snapshots/7aa8fc1d9b861d797880f4a341166d4bb3439f74/Ornith-1.5-35B-A3B-AD-Q4_K-IQ4_XS.gguf --max-context 131072 --pool-workers 8 --kv f16 --expert-cache auto --prefill 8 --gpu --mtp /hf-cache/models--EryriLabs--Ornith-1.5-35B-A3B-BigBang-MTP-GGUF/snapshots/2e9f6f487b82200f2a045e67d01a3f1e2982b00a/mtpdraft-Q8_0.gguf --spec 1
+strata-ornith: checking the plan against the 10240 MiB budget ...
+strata-qwen35: 40 layers, 2048 wide, 256 experts top-8, context 131072, trained MTP loaded spec 1
+HIP budget: 10240 MiB ceiling, 1024 MiB runtime reserve, 256 MiB slack; explicit allocations capped at 8960 MiB
+qwen35 fit: tier=gpu context=131072 kv=f16 mtp=yes
+qwen35 fit: dense=2.524 GiB gdn_state=0.061 GiB kv_cache=2.750 GiB scratch=0.202 GiB
+qwen35 fit: fixed=5.537 GiB; device free=8.750 GiB (budget, runtime reserve and slack already removed)
+qwen35 fit: expert blob=1.62 MiB, slots requested=1866 slots that fit=1866 of 10240 expert pairs
+qwen35 fit: FITS - total 8.498 GiB of 8.750 GiB with 1866 expert slots
+strata-ornith: check-only: the artifact and its geometry are valid; not starting the server

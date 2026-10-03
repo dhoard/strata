@@ -1,0 +1,28 @@
+HIP budget: 10240 MiB ceiling, 1024 MiB runtime reserve, 256 MiB slack; explicit allocations capped at 8960 MiB
+HIP budget: device 0 tracked peak 273088512 bytes
+cells=1 kv=f32 all 4096 outputs bitwise equal
+cells=1 kv=f16 all 4096 outputs bitwise equal
+cells=8 kv=f32 all 4096 outputs bitwise equal
+cells=8 kv=f16 all 4096 outputs bitwise equal
+cells=63 kv=f32 all 4096 outputs bitwise equal
+cells=63 kv=f16 all 4096 outputs bitwise equal
+cells=255 kv=f32 all 4096 outputs bitwise equal
+cells=255 kv=f16 all 4096 outputs bitwise equal
+cells=256 kv=f32 all 4096 outputs bitwise equal
+cells=256 kv=f16 all 4096 outputs bitwise equal
+cells=257 kv=f32 all 4096 outputs bitwise equal
+cells=257 kv=f16 all 4096 outputs bitwise equal
+cells=511 kv=f32 all 4096 outputs bitwise equal
+cells=511 kv=f16 all 4096 outputs bitwise equal
+cells=512 kv=f32 all 4096 outputs bitwise equal
+cells=512 kv=f16 all 4096 outputs bitwise equal
+cells=513 kv=f32 all 4096 outputs bitwise equal
+cells=513 kv=f16 all 4096 outputs bitwise equal
+cells=1023 kv=f32 all 4096 outputs bitwise equal
+cells=1023 kv=f16 all 4096 outputs bitwise equal
+cells=4096 kv=f32 all 4096 outputs bitwise equal
+cells=4096 kv=f16 all 4096 outputs bitwise equal
+cells=8193 kv=f32 all 4096 outputs bitwise equal
+cells=8193 kv=f16 all 4096 outputs bitwise equal
+cells=65537 kv=f32 all 4096 outputs bitwise equal
+cells=65537 kv=f16 all 4096 outputs bitwise equal

@@ -1,0 +1,1807 @@
+HIP budget: 10240 MiB ceiling, 1024 MiB runtime reserve, 256 MiB slack; explicit allocations capped at 8960 MiB
+qwen35 resident GPU: KV=f32 slots=0 workers=12 dense/state ready; CPU expert backing 16.250 GiB
+qwen35 GPU plan: dense=1.980 GiB gdn=0.061 GiB kv=0.020 GiB scratch=0.010 GiB; planned 2.071 GiB, allocated 2.071 GiB
+token=0 id=320
+layer=0 residual max_abs=0 rms=0 relative_rms=0
+layer=1 residual max_abs=0 rms=0 relative_rms=0
+layer=2 residual max_abs=0 rms=0 relative_rms=0
+layer=3 residual max_abs=0 rms=0 relative_rms=0
+layer=4 residual max_abs=0 rms=0 relative_rms=0
+layer=5 residual max_abs=0 rms=0 relative_rms=0
+layer=6 residual max_abs=0 rms=0 relative_rms=0
+layer=7 residual max_abs=0 rms=0 relative_rms=0
+layer=8 residual max_abs=0 rms=0 relative_rms=0
+layer=9 residual max_abs=0 rms=0 relative_rms=0
+layer=10 residual max_abs=0 rms=0 relative_rms=0
+layer=11 residual max_abs=0 rms=0 relative_rms=0
+layer=12 residual max_abs=0 rms=0 relative_rms=0
+layer=13 residual max_abs=0 rms=0 relative_rms=0
+layer=14 residual max_abs=0 rms=0 relative_rms=0
+layer=15 residual max_abs=0 rms=0 relative_rms=0
+layer=16 residual max_abs=0 rms=0 relative_rms=0
+layer=17 residual max_abs=0 rms=0 relative_rms=0
+layer=18 residual max_abs=0 rms=0 relative_rms=0
+layer=19 residual max_abs=0 rms=0 relative_rms=0
+layer=20 residual max_abs=0 rms=0 relative_rms=0
+layer=21 residual max_abs=0 rms=0 relative_rms=0
+layer=22 residual max_abs=0 rms=0 relative_rms=0
+layer=23 residual max_abs=0 rms=0 relative_rms=0
+layer=24 residual max_abs=0 rms=0 relative_rms=0
+layer=25 residual max_abs=0 rms=0 relative_rms=0
+layer=26 residual max_abs=0 rms=0 relative_rms=0
+layer=27 residual max_abs=0 rms=0 relative_rms=0
+layer=28 residual max_abs=0 rms=0 relative_rms=0
+layer=29 residual max_abs=0 rms=0 relative_rms=0
+layer=30 residual max_abs=0 rms=0 relative_rms=0
+layer=31 residual max_abs=0 rms=0 relative_rms=0
+layer=32 residual max_abs=0 rms=0 relative_rms=0
+layer=33 residual max_abs=0 rms=0 relative_rms=0
+layer=34 residual max_abs=0 rms=0 relative_rms=0
+layer=35 residual max_abs=0 rms=0 relative_rms=0
+layer=36 residual max_abs=0 rms=0 relative_rms=0
+layer=37 residual max_abs=0 rms=0 relative_rms=0
+layer=38 residual max_abs=0 rms=0 relative_rms=0
+layer=39 residual max_abs=0 rms=0 relative_rms=0
+hidden max_abs=0 rms=0 relative_rms=0
+logits max_abs=0 rms=0 relative_rms=0
+distribution kl=0 top10_overlap=10/10
+top1=198/198
+token=1 id=9988
+layer=0 residual max_abs=0 rms=0 relative_rms=0
+layer=1 residual max_abs=0 rms=0 relative_rms=0
+layer=2 residual max_abs=0 rms=0 relative_rms=0
+layer=3 residual max_abs=0 rms=0 relative_rms=0
+layer=4 residual max_abs=0 rms=0 relative_rms=0
+layer=5 residual max_abs=0 rms=0 relative_rms=0
+layer=6 residual max_abs=0 rms=0 relative_rms=0
+layer=7 residual max_abs=0 rms=0 relative_rms=0
+layer=8 residual max_abs=0 rms=0 relative_rms=0
+layer=9 residual max_abs=0 rms=0 relative_rms=0
+layer=10 residual max_abs=0 rms=0 relative_rms=0
+layer=11 residual max_abs=0 rms=0 relative_rms=0
+layer=12 residual max_abs=0 rms=0 relative_rms=0
+layer=13 residual max_abs=0 rms=0 relative_rms=0
+layer=14 residual max_abs=0 rms=0 relative_rms=0
+layer=15 residual max_abs=0 rms=0 relative_rms=0
+layer=16 residual max_abs=0 rms=0 relative_rms=0
+layer=17 residual max_abs=0 rms=0 relative_rms=0
+layer=18 residual max_abs=0 rms=0 relative_rms=0
+layer=19 residual max_abs=0 rms=0 relative_rms=0
+layer=20 residual max_abs=0 rms=0 relative_rms=0
+layer=21 residual max_abs=0 rms=0 relative_rms=0
+layer=22 residual max_abs=0 rms=0 relative_rms=0
+layer=23 residual max_abs=0 rms=0 relative_rms=0
+layer=24 residual max_abs=0 rms=0 relative_rms=0
+layer=25 residual max_abs=0 rms=0 relative_rms=0
+layer=26 residual max_abs=0 rms=0 relative_rms=0
+layer=27 residual max_abs=0 rms=0 relative_rms=0
+layer=28 residual max_abs=0 rms=0 relative_rms=0
+layer=29 residual max_abs=0 rms=0 relative_rms=0
+layer=30 residual max_abs=0 rms=0 relative_rms=0
+layer=31 residual max_abs=0 rms=0 relative_rms=0
+layer=32 residual max_abs=0 rms=0 relative_rms=0
+layer=33 residual max_abs=0 rms=0 relative_rms=0
+layer=34 residual max_abs=0 rms=0 relative_rms=0
+layer=35 residual max_abs=0 rms=0 relative_rms=0
+layer=36 residual max_abs=0 rms=0 relative_rms=0
+layer=37 residual max_abs=0 rms=0 relative_rms=0
+layer=38 residual max_abs=0 rms=0 relative_rms=0
+layer=39 residual max_abs=0 rms=0 relative_rms=0
+hidden max_abs=0 rms=0 relative_rms=0
+logits max_abs=0 rms=0 relative_rms=0
+distribution kl=0 top10_overlap=10/10
+top1=261/261
+token=2 id=411
+layer=0 residual max_abs=0 rms=0 relative_rms=0
+layer=1 residual max_abs=0 rms=0 relative_rms=0
+layer=2 residual max_abs=0 rms=0 relative_rms=0
+layer=3 residual max_abs=0 rms=0 relative_rms=0
+layer=4 residual max_abs=0 rms=0 relative_rms=0
+layer=5 residual max_abs=0 rms=0 relative_rms=0
+layer=6 residual max_abs=0 rms=0 relative_rms=0
+layer=7 residual max_abs=0 rms=0 relative_rms=0
+layer=8 residual max_abs=0 rms=0 relative_rms=0
+layer=9 residual max_abs=0 rms=0 relative_rms=0
+layer=10 residual max_abs=0 rms=0 relative_rms=0
+layer=11 residual max_abs=0 rms=0 relative_rms=0
+layer=12 residual max_abs=0 rms=0 relative_rms=0
+layer=13 residual max_abs=0 rms=0 relative_rms=0
+layer=14 residual max_abs=0 rms=0 relative_rms=0
+layer=15 residual max_abs=0 rms=0 relative_rms=0
+layer=16 residual max_abs=0 rms=0 relative_rms=0
+layer=17 residual max_abs=0 rms=0 relative_rms=0
+layer=18 residual max_abs=0 rms=0 relative_rms=0
+layer=19 residual max_abs=0 rms=0 relative_rms=0
+layer=20 residual max_abs=0 rms=0 relative_rms=0
+layer=21 residual max_abs=0 rms=0 relative_rms=0
+layer=22 residual max_abs=0 rms=0 relative_rms=0
+layer=23 residual max_abs=0 rms=0 relative_rms=0
+layer=24 residual max_abs=0 rms=0 relative_rms=0
+layer=25 residual max_abs=0 rms=0 relative_rms=0
+layer=26 residual max_abs=0 rms=0 relative_rms=0
+layer=27 residual max_abs=0 rms=0 relative_rms=0
+layer=28 residual max_abs=0 rms=0 relative_rms=0
+layer=29 residual max_abs=0 rms=0 relative_rms=0
+layer=30 residual max_abs=0 rms=0 relative_rms=0
+layer=31 residual max_abs=0 rms=0 relative_rms=0
+layer=32 residual max_abs=0 rms=0 relative_rms=0
+layer=33 residual max_abs=0 rms=0 relative_rms=0
+layer=34 residual max_abs=0 rms=0 relative_rms=0
+layer=35 residual max_abs=0 rms=0 relative_rms=0
+layer=36 residual max_abs=0 rms=0 relative_rms=0
+layer=37 residual max_abs=0 rms=0 relative_rms=0
+layer=38 residual max_abs=0 rms=0 relative_rms=0
+layer=39 residual max_abs=0 rms=0 relative_rms=0
+hidden max_abs=0 rms=0 relative_rms=0
+logits max_abs=0 rms=0 relative_rms=0
+distribution kl=0 top10_overlap=10/10
+top1=1970/1970
+token=3 id=7873
+layer=0 residual max_abs=0 rms=0 relative_rms=0
+layer=1 residual max_abs=0 rms=0 relative_rms=0
+layer=2 residual max_abs=0 rms=0 relative_rms=0
+layer=3 residual max_abs=0 rms=0 relative_rms=0
+layer=4 residual max_abs=0 rms=0 relative_rms=0
+layer=5 residual max_abs=0 rms=0 relative_rms=0
+layer=6 residual max_abs=0 rms=0 relative_rms=0
+layer=7 residual max_abs=0 rms=0 relative_rms=0
+layer=8 residual max_abs=0 rms=0 relative_rms=0
+layer=9 residual max_abs=0 rms=0 relative_rms=0
+layer=10 residual max_abs=0 rms=0 relative_rms=0
+layer=11 residual max_abs=0 rms=0 relative_rms=0
+layer=12 residual max_abs=0 rms=0 relative_rms=0
+layer=13 residual max_abs=0 rms=0 relative_rms=0
+layer=14 residual max_abs=0 rms=0 relative_rms=0
+layer=15 residual max_abs=0 rms=0 relative_rms=0
+layer=16 residual max_abs=0 rms=0 relative_rms=0
+layer=17 residual max_abs=0 rms=0 relative_rms=0
+layer=18 residual max_abs=0 rms=0 relative_rms=0
+layer=19 residual max_abs=0 rms=0 relative_rms=0
+layer=20 residual max_abs=0 rms=0 relative_rms=0
+layer=21 residual max_abs=0 rms=0 relative_rms=0
+layer=22 residual max_abs=0 rms=0 relative_rms=0
+layer=23 residual max_abs=0 rms=0 relative_rms=0
+layer=24 residual max_abs=0 rms=0 relative_rms=0
+layer=25 residual max_abs=0 rms=0 relative_rms=0
+layer=26 residual max_abs=0 rms=0 relative_rms=0
+layer=27 residual max_abs=0 rms=0 relative_rms=0
+layer=28 residual max_abs=0 rms=0 relative_rms=0
+layer=29 residual max_abs=0 rms=0 relative_rms=0
+layer=30 residual max_abs=0 rms=0 relative_rms=0
+layer=31 residual max_abs=0 rms=0 relative_rms=0
+layer=32 residual max_abs=0 rms=0 relative_rms=0
+layer=33 residual max_abs=0 rms=0 relative_rms=0
+layer=34 residual max_abs=0 rms=0 relative_rms=0
+layer=35 residual max_abs=0 rms=0 relative_rms=0
+layer=36 residual max_abs=0 rms=0 relative_rms=0
+layer=37 residual max_abs=0 rms=0 relative_rms=0
+layer=38 residual max_abs=0 rms=0 relative_rms=0
+layer=39 residual max_abs=0 rms=0 relative_rms=0
+hidden max_abs=0 rms=0 relative_rms=0
+logits max_abs=0 rms=0 relative_rms=0
+distribution kl=0 top10_overlap=10/10
+top1=314/314
+token=4 id=321
+layer=0 residual max_abs=0 rms=0 relative_rms=0
+layer=1 residual max_abs=0 rms=0 relative_rms=0
+layer=2 residual max_abs=0 rms=0 relative_rms=0
+layer=3 residual max_abs=0 rms=0 relative_rms=0
+layer=4 residual max_abs=0 rms=0 relative_rms=0
+layer=5 residual max_abs=0 rms=0 relative_rms=0
+layer=6 residual max_abs=0 rms=0 relative_rms=0
+layer=7 residual max_abs=0 rms=0 relative_rms=0
+layer=8 residual max_abs=0 rms=0 relative_rms=0
+layer=9 residual max_abs=0 rms=0 relative_rms=0
+layer=10 residual max_abs=0 rms=0 relative_rms=0
+layer=11 residual max_abs=0 rms=0 relative_rms=0
+layer=12 residual max_abs=0 rms=0 relative_rms=0
+layer=13 residual max_abs=0 rms=0 relative_rms=0
+layer=14 residual max_abs=0 rms=0 relative_rms=0
+layer=15 residual max_abs=0 rms=0 relative_rms=0
+layer=16 residual max_abs=0 rms=0 relative_rms=0
+layer=17 residual max_abs=0 rms=0 relative_rms=0
+layer=18 residual max_abs=0 rms=0 relative_rms=0
+layer=19 residual max_abs=0 rms=0 relative_rms=0
+layer=20 residual max_abs=0 rms=0 relative_rms=0
+layer=21 residual max_abs=0 rms=0 relative_rms=0
+layer=22 residual max_abs=0 rms=0 relative_rms=0
+layer=23 residual max_abs=0 rms=0 relative_rms=0
+layer=24 residual max_abs=0 rms=0 relative_rms=0
+layer=25 residual max_abs=0 rms=0 relative_rms=0
+layer=26 residual max_abs=0 rms=0 relative_rms=0
+layer=27 residual max_abs=0 rms=0 relative_rms=0
+layer=28 residual max_abs=0 rms=0 relative_rms=0
+layer=29 residual max_abs=0 rms=0 relative_rms=0
+layer=30 residual max_abs=0 rms=0 relative_rms=0
+layer=31 residual max_abs=0 rms=0 relative_rms=0
+layer=32 residual max_abs=0 rms=0 relative_rms=0
+layer=33 residual max_abs=0 rms=0 relative_rms=0
+layer=34 residual max_abs=0 rms=0 relative_rms=0
+layer=35 residual max_abs=0 rms=0 relative_rms=0
+layer=36 residual max_abs=0 rms=0 relative_rms=0
+layer=37 residual max_abs=0 rms=0 relative_rms=0
+layer=38 residual max_abs=0 rms=0 relative_rms=0
+layer=39 residual max_abs=0 rms=0 relative_rms=0
+hidden max_abs=0 rms=0 relative_rms=0
+logits max_abs=0 rms=0 relative_rms=0
+distribution kl=0 top10_overlap=10/10
+top1=3300/3300
+token=5 id=10033
+layer=0 residual max_abs=0 rms=0 relative_rms=0
+layer=1 residual max_abs=0 rms=0 relative_rms=0
+layer=2 residual max_abs=0 rms=0 relative_rms=0
+layer=3 residual max_abs=0 rms=0 relative_rms=0
+layer=4 residual max_abs=0 rms=0 relative_rms=0
+layer=5 residual max_abs=0 rms=0 relative_rms=0
+layer=6 residual max_abs=0 rms=0 relative_rms=0
+layer=7 residual max_abs=0 rms=0 relative_rms=0
+layer=8 residual max_abs=0 rms=0 relative_rms=0
+layer=9 residual max_abs=0 rms=0 relative_rms=0
+layer=10 residual max_abs=0 rms=0 relative_rms=0
+layer=11 residual max_abs=0 rms=0 relative_rms=0
+layer=12 residual max_abs=0 rms=0 relative_rms=0
+layer=13 residual max_abs=0 rms=0 relative_rms=0
+layer=14 residual max_abs=0 rms=0 relative_rms=0
+layer=15 residual max_abs=0 rms=0 relative_rms=0
+layer=16 residual max_abs=0 rms=0 relative_rms=0
+layer=17 residual max_abs=0 rms=0 relative_rms=0
+layer=18 residual max_abs=0 rms=0 relative_rms=0
+layer=19 residual max_abs=0 rms=0 relative_rms=0
+layer=20 residual max_abs=0 rms=0 relative_rms=0
+layer=21 residual max_abs=0 rms=0 relative_rms=0
+layer=22 residual max_abs=0 rms=0 relative_rms=0
+layer=23 residual max_abs=0 rms=0 relative_rms=0
+layer=24 residual max_abs=0 rms=0 relative_rms=0
+layer=25 residual max_abs=0 rms=0 relative_rms=0
+layer=26 residual max_abs=0 rms=0 relative_rms=0
+layer=27 residual max_abs=0 rms=0 relative_rms=0
+layer=28 residual max_abs=0 rms=0 relative_rms=0
+layer=29 residual max_abs=0 rms=0 relative_rms=0
+layer=30 residual max_abs=0 rms=0 relative_rms=0
+layer=31 residual max_abs=0 rms=0 relative_rms=0
+layer=32 residual max_abs=0 rms=0 relative_rms=0
+layer=33 residual max_abs=0 rms=0 relative_rms=0
+layer=34 residual max_abs=0 rms=0 relative_rms=0
+layer=35 residual max_abs=0 rms=0 relative_rms=0
+layer=36 residual max_abs=0 rms=0 relative_rms=0
+layer=37 residual max_abs=0 rms=0 relative_rms=0
+layer=38 residual max_abs=0 rms=0 relative_rms=0
+layer=39 residual max_abs=0 rms=0 relative_rms=0
+hidden max_abs=0 rms=0 relative_rms=0
+logits max_abs=0 rms=0 relative_rms=0
+distribution kl=0 top10_overlap=10/10
+top1=1092/1092
+token=6 id=1204
+layer=0 residual max_abs=0 rms=0 relative_rms=0
+layer=1 residual max_abs=0 rms=0 relative_rms=0
+layer=2 residual max_abs=0 rms=0 relative_rms=0
+layer=3 residual max_abs=0 rms=0 relative_rms=0
+layer=4 residual max_abs=0 rms=0 relative_rms=0
+layer=5 residual max_abs=0 rms=0 relative_rms=0
+layer=6 residual max_abs=0 rms=0 relative_rms=0
+layer=7 residual max_abs=0 rms=0 relative_rms=0
+layer=8 residual max_abs=0 rms=0 relative_rms=0
+layer=9 residual max_abs=0 rms=0 relative_rms=0
+layer=10 residual max_abs=0 rms=0 relative_rms=0
+layer=11 residual max_abs=0 rms=0 relative_rms=0
+layer=12 residual max_abs=0 rms=0 relative_rms=0
+layer=13 residual max_abs=0 rms=0 relative_rms=0
+layer=14 residual max_abs=0 rms=0 relative_rms=0
+layer=15 residual max_abs=0 rms=0 relative_rms=0
+layer=16 residual max_abs=0 rms=0 relative_rms=0
+layer=17 residual max_abs=0 rms=0 relative_rms=0
+layer=18 residual max_abs=0 rms=0 relative_rms=0
+layer=19 residual max_abs=0 rms=0 relative_rms=0
+layer=20 residual max_abs=0 rms=0 relative_rms=0
+layer=21 residual max_abs=0 rms=0 relative_rms=0
+layer=22 residual max_abs=0 rms=0 relative_rms=0
+layer=23 residual max_abs=0 rms=0 relative_rms=0
+layer=24 residual max_abs=0 rms=0 relative_rms=0
+layer=25 residual max_abs=0 rms=0 relative_rms=0
+layer=26 residual max_abs=0 rms=0 relative_rms=0
+layer=27 residual max_abs=0 rms=0 relative_rms=0
+layer=28 residual max_abs=0 rms=0 relative_rms=0
+layer=29 residual max_abs=0 rms=0 relative_rms=0
+layer=30 residual max_abs=0 rms=0 relative_rms=0
+layer=31 residual max_abs=0 rms=0 relative_rms=0
+layer=32 residual max_abs=0 rms=0 relative_rms=0
+layer=33 residual max_abs=0 rms=0 relative_rms=0
+layer=34 residual max_abs=0 rms=0 relative_rms=0
+layer=35 residual max_abs=0 rms=0 relative_rms=0
+layer=36 residual max_abs=0 rms=0 relative_rms=0
+layer=37 residual max_abs=0 rms=0 relative_rms=0
+layer=38 residual max_abs=0 rms=0 relative_rms=0
+layer=39 residual max_abs=0 rms=0 relative_rms=0
+hidden max_abs=0 rms=0 relative_rms=0
+logits max_abs=0 rms=0 relative_rms=0
+distribution kl=0 top10_overlap=10/10
+top1=424/424
+token=7 id=310
+layer=0 residual max_abs=0 rms=0 relative_rms=0
+layer=1 residual max_abs=0 rms=0 relative_rms=0
+layer=2 residual max_abs=0 rms=0 relative_rms=0
+layer=3 residual max_abs=0 rms=0 relative_rms=0
+layer=4 residual max_abs=0 rms=0 relative_rms=0
+layer=5 residual max_abs=0 rms=0 relative_rms=0
+layer=6 residual max_abs=0 rms=0 relative_rms=0
+layer=7 residual max_abs=0 rms=0 relative_rms=0
+layer=8 residual max_abs=0 rms=0 relative_rms=0
+layer=9 residual max_abs=0 rms=0 relative_rms=0
+layer=10 residual max_abs=0 rms=0 relative_rms=0
+layer=11 residual max_abs=0 rms=0 relative_rms=0
+layer=12 residual max_abs=0 rms=0 relative_rms=0
+layer=13 residual max_abs=0 rms=0 relative_rms=0
+layer=14 residual max_abs=0 rms=0 relative_rms=0
+layer=15 residual max_abs=0 rms=0 relative_rms=0
+layer=16 residual max_abs=0 rms=0 relative_rms=0
+layer=17 residual max_abs=0 rms=0 relative_rms=0
+layer=18 residual max_abs=0 rms=0 relative_rms=0
+layer=19 residual max_abs=0 rms=0 relative_rms=0
+layer=20 residual max_abs=0 rms=0 relative_rms=0
+layer=21 residual max_abs=0 rms=0 relative_rms=0
+layer=22 residual max_abs=0 rms=0 relative_rms=0
+layer=23 residual max_abs=0 rms=0 relative_rms=0
+layer=24 residual max_abs=0 rms=0 relative_rms=0
+layer=25 residual max_abs=0 rms=0 relative_rms=0
+layer=26 residual max_abs=0 rms=0 relative_rms=0
+layer=27 residual max_abs=0 rms=0 relative_rms=0
+layer=28 residual max_abs=0 rms=0 relative_rms=0
+layer=29 residual max_abs=0 rms=0 relative_rms=0
+layer=30 residual max_abs=0 rms=0 relative_rms=0
+layer=31 residual max_abs=0 rms=0 relative_rms=0
+layer=32 residual max_abs=0 rms=0 relative_rms=0
+layer=33 residual max_abs=0 rms=0 relative_rms=0
+layer=34 residual max_abs=0 rms=0 relative_rms=0
+layer=35 residual max_abs=0 rms=0 relative_rms=0
+layer=36 residual max_abs=0 rms=0 relative_rms=0
+layer=37 residual max_abs=0 rms=0 relative_rms=0
+layer=38 residual max_abs=0 rms=0 relative_rms=0
+layer=39 residual max_abs=0 rms=0 relative_rms=0
+hidden max_abs=0 rms=0 relative_rms=0
+logits max_abs=0 rms=0 relative_rms=0
+distribution kl=0 top10_overlap=10/10
+top1=7042/7042
+token=8 id=7042
+layer=0 residual max_abs=0 rms=0 relative_rms=0
+layer=1 residual max_abs=0 rms=0 relative_rms=0
+layer=2 residual max_abs=0 rms=0 relative_rms=0
+layer=3 residual max_abs=0 rms=0 relative_rms=0
+layer=4 residual max_abs=0 rms=0 relative_rms=0
+layer=5 residual max_abs=0 rms=0 relative_rms=0
+layer=6 residual max_abs=0 rms=0 relative_rms=0
+layer=7 residual max_abs=0 rms=0 relative_rms=0
+layer=8 residual max_abs=0 rms=0 relative_rms=0
+layer=9 residual max_abs=0 rms=0 relative_rms=0
+layer=10 residual max_abs=0 rms=0 relative_rms=0
+layer=11 residual max_abs=0 rms=0 relative_rms=0
+layer=12 residual max_abs=0 rms=0 relative_rms=0
+layer=13 residual max_abs=0 rms=0 relative_rms=0
+layer=14 residual max_abs=0 rms=0 relative_rms=0
+layer=15 residual max_abs=0 rms=0 relative_rms=0
+layer=16 residual max_abs=0 rms=0 relative_rms=0
+layer=17 residual max_abs=0 rms=0 relative_rms=0
+layer=18 residual max_abs=0 rms=0 relative_rms=0
+layer=19 residual max_abs=0 rms=0 relative_rms=0
+layer=20 residual max_abs=0 rms=0 relative_rms=0
+layer=21 residual max_abs=0 rms=0 relative_rms=0
+layer=22 residual max_abs=0 rms=0 relative_rms=0
+layer=23 residual max_abs=0 rms=0 relative_rms=0
+layer=24 residual max_abs=0 rms=0 relative_rms=0
+layer=25 residual max_abs=0 rms=0 relative_rms=0
+layer=26 residual max_abs=0 rms=0 relative_rms=0
+layer=27 residual max_abs=0 rms=0 relative_rms=0
+layer=28 residual max_abs=0 rms=0 relative_rms=0
+layer=29 residual max_abs=0 rms=0 relative_rms=0
+layer=30 residual max_abs=0 rms=0 relative_rms=0
+layer=31 residual max_abs=0 rms=0 relative_rms=0
+layer=32 residual max_abs=0 rms=0 relative_rms=0
+layer=33 residual max_abs=0 rms=0 relative_rms=0
+layer=34 residual max_abs=0 rms=0 relative_rms=0
+layer=35 residual max_abs=0 rms=0 relative_rms=0
+layer=36 residual max_abs=0 rms=0 relative_rms=0
+layer=37 residual max_abs=0 rms=0 relative_rms=0
+layer=38 residual max_abs=0 rms=0 relative_rms=0
+layer=39 residual max_abs=0 rms=0 relative_rms=0
+hidden max_abs=0 rms=0 relative_rms=0
+logits max_abs=0 rms=0 relative_rms=0
+distribution kl=0 top10_overlap=10/10
+top1=424/424
+token=9 id=424
+layer=0 residual max_abs=0 rms=0 relative_rms=0
+layer=1 residual max_abs=0 rms=0 relative_rms=0
+layer=2 residual max_abs=0 rms=0 relative_rms=0
+layer=3 residual max_abs=0 rms=0 relative_rms=0
+layer=4 residual max_abs=0 rms=0 relative_rms=0
+layer=5 residual max_abs=0 rms=0 relative_rms=0
+layer=6 residual max_abs=0 rms=0 relative_rms=0
+layer=7 residual max_abs=0 rms=0 relative_rms=0
+layer=8 residual max_abs=0 rms=0 relative_rms=0
+layer=9 residual max_abs=0 rms=0 relative_rms=0
+layer=10 residual max_abs=0 rms=0 relative_rms=0
+layer=11 residual max_abs=0 rms=0 relative_rms=0
+layer=12 residual max_abs=0 rms=0 relative_rms=0
+layer=13 residual max_abs=0 rms=0 relative_rms=0
+layer=14 residual max_abs=0 rms=0 relative_rms=0
+layer=15 residual max_abs=0 rms=0 relative_rms=0
+layer=16 residual max_abs=0 rms=0 relative_rms=0
+layer=17 residual max_abs=0 rms=0 relative_rms=0
+layer=18 residual max_abs=0 rms=0 relative_rms=0
+layer=19 residual max_abs=0 rms=0 relative_rms=0
+layer=20 residual max_abs=0 rms=0 relative_rms=0
+layer=21 residual max_abs=0 rms=0 relative_rms=0
+layer=22 residual max_abs=0 rms=0 relative_rms=0
+layer=23 residual max_abs=0 rms=0 relative_rms=0
+layer=24 residual max_abs=0 rms=0 relative_rms=0
+layer=25 residual max_abs=0 rms=0 relative_rms=0
+layer=26 residual max_abs=0 rms=0 relative_rms=0
+layer=27 residual max_abs=0 rms=0 relative_rms=0
+layer=28 residual max_abs=0 rms=0 relative_rms=0
+layer=29 residual max_abs=0 rms=0 relative_rms=0
+layer=30 residual max_abs=0 rms=0 relative_rms=0
+layer=31 residual max_abs=0 rms=0 relative_rms=0
+layer=32 residual max_abs=0 rms=0 relative_rms=0
+layer=33 residual max_abs=0 rms=0 relative_rms=0
+layer=34 residual max_abs=0 rms=0 relative_rms=0
+layer=35 residual max_abs=0 rms=0 relative_rms=0
+layer=36 residual max_abs=0 rms=0 relative_rms=0
+layer=37 residual max_abs=0 rms=0 relative_rms=0
+layer=38 residual max_abs=0 rms=0 relative_rms=0
+layer=39 residual max_abs=0 rms=0 relative_rms=0
+hidden max_abs=0 rms=0 relative_rms=0
+logits max_abs=0 rms=0 relative_rms=0
+distribution kl=0 top10_overlap=10/10
+top1=13/13
+token=10 id=13
+layer=0 residual max_abs=0 rms=0 relative_rms=0
+layer=1 residual max_abs=0 rms=0 relative_rms=0
+layer=2 residual max_abs=0 rms=0 relative_rms=0
+layer=3 residual max_abs=0 rms=0 relative_rms=0
+layer=4 residual max_abs=0 rms=0 relative_rms=0
+layer=5 residual max_abs=0 rms=0 relative_rms=0
+layer=6 residual max_abs=0 rms=0 relative_rms=0
+layer=7 residual max_abs=0 rms=0 relative_rms=0
+layer=8 residual max_abs=0 rms=0 relative_rms=0
+layer=9 residual max_abs=0 rms=0 relative_rms=0
+layer=10 residual max_abs=0 rms=0 relative_rms=0
+layer=11 residual max_abs=0 rms=0 relative_rms=0
+layer=12 residual max_abs=0 rms=0 relative_rms=0
+layer=13 residual max_abs=0 rms=0 relative_rms=0
+layer=14 residual max_abs=0 rms=0 relative_rms=0
+layer=15 residual max_abs=0 rms=0 relative_rms=0
+layer=16 residual max_abs=0 rms=0 relative_rms=0
+layer=17 residual max_abs=0 rms=0 relative_rms=0
+layer=18 residual max_abs=0 rms=0 relative_rms=0
+layer=19 residual max_abs=0 rms=0 relative_rms=0
+layer=20 residual max_abs=0 rms=0 relative_rms=0
+layer=21 residual max_abs=0 rms=0 relative_rms=0
+layer=22 residual max_abs=0 rms=0 relative_rms=0
+layer=23 residual max_abs=0 rms=0 relative_rms=0
+layer=24 residual max_abs=0 rms=0 relative_rms=0
+layer=25 residual max_abs=0 rms=0 relative_rms=0
+layer=26 residual max_abs=0 rms=0 relative_rms=0
+layer=27 residual max_abs=0 rms=0 relative_rms=0
+layer=28 residual max_abs=0 rms=0 relative_rms=0
+layer=29 residual max_abs=0 rms=0 relative_rms=0
+layer=30 residual max_abs=0 rms=0 relative_rms=0
+layer=31 residual max_abs=0 rms=0 relative_rms=0
+layer=32 residual max_abs=0 rms=0 relative_rms=0
+layer=33 residual max_abs=0 rms=0 relative_rms=0
+layer=34 residual max_abs=0 rms=0 relative_rms=0
+layer=35 residual max_abs=0 rms=0 relative_rms=0
+layer=36 residual max_abs=0 rms=0 relative_rms=0
+layer=37 residual max_abs=0 rms=0 relative_rms=0
+layer=38 residual max_abs=0 rms=0 relative_rms=0
+layer=39 residual max_abs=0 rms=0 relative_rms=0
+hidden max_abs=0 rms=0 relative_rms=0
+logits max_abs=0 rms=0 relative_rms=0
+distribution kl=0 top10_overlap=10/10
+top1=271/271
+token=11 id=271
+layer=0 residual max_abs=0 rms=0 relative_rms=0
+layer=1 residual max_abs=0 rms=0 relative_rms=0
+layer=2 residual max_abs=0 rms=0 relative_rms=0
+layer=3 residual max_abs=0 rms=0 relative_rms=0
+layer=4 residual max_abs=0 rms=0 relative_rms=0
+layer=5 residual max_abs=0 rms=0 relative_rms=0
+layer=6 residual max_abs=0 rms=0 relative_rms=0
+layer=7 residual max_abs=0 rms=0 relative_rms=0
+layer=8 residual max_abs=0 rms=0 relative_rms=0
+layer=9 residual max_abs=0 rms=0 relative_rms=0
+layer=10 residual max_abs=0 rms=0 relative_rms=0
+layer=11 residual max_abs=0 rms=0 relative_rms=0
+layer=12 residual max_abs=0 rms=0 relative_rms=0
+layer=13 residual max_abs=0 rms=0 relative_rms=0
+layer=14 residual max_abs=0 rms=0 relative_rms=0
+layer=15 residual max_abs=0 rms=0 relative_rms=0
+layer=16 residual max_abs=0 rms=0 relative_rms=0
+layer=17 residual max_abs=0 rms=0 relative_rms=0
+layer=18 residual max_abs=0 rms=0 relative_rms=0
+layer=19 residual max_abs=0 rms=0 relative_rms=0
+layer=20 residual max_abs=0 rms=0 relative_rms=0
+layer=21 residual max_abs=0 rms=0 relative_rms=0
+layer=22 residual max_abs=0 rms=0 relative_rms=0
+layer=23 residual max_abs=0 rms=0 relative_rms=0
+layer=24 residual max_abs=0 rms=0 relative_rms=0
+layer=25 residual max_abs=0 rms=0 relative_rms=0
+layer=26 residual max_abs=0 rms=0 relative_rms=0
+layer=27 residual max_abs=0 rms=0 relative_rms=0
+layer=28 residual max_abs=0 rms=0 relative_rms=0
+layer=29 residual max_abs=0 rms=0 relative_rms=0
+layer=30 residual max_abs=0 rms=0 relative_rms=0
+layer=31 residual max_abs=0 rms=0 relative_rms=0
+layer=32 residual max_abs=0 rms=0 relative_rms=0
+layer=33 residual max_abs=0 rms=0 relative_rms=0
+layer=34 residual max_abs=0 rms=0 relative_rms=0
+layer=35 residual max_abs=0 rms=0 relative_rms=0
+layer=36 residual max_abs=0 rms=0 relative_rms=0
+layer=37 residual max_abs=0 rms=0 relative_rms=0
+layer=38 residual max_abs=0 rms=0 relative_rms=0
+layer=39 residual max_abs=0 rms=0 relative_rms=0
+hidden max_abs=0 rms=0 relative_rms=0
+logits max_abs=0 rms=0 relative_rms=0
+distribution kl=0 top10_overlap=10/10
+top1=71093/71093
+token=12 id=71093
+layer=0 residual max_abs=0 rms=0 relative_rms=0
+layer=1 residual max_abs=0 rms=0 relative_rms=0
+layer=2 residual max_abs=0 rms=0 relative_rms=0
+layer=3 residual max_abs=0 rms=0 relative_rms=0
+layer=4 residual max_abs=0 rms=0 relative_rms=0
+layer=5 residual max_abs=0 rms=0 relative_rms=0
+layer=6 residual max_abs=0 rms=0 relative_rms=0
+layer=7 residual max_abs=0 rms=0 relative_rms=0
+layer=8 residual max_abs=0 rms=0 relative_rms=0
+layer=9 residual max_abs=0 rms=0 relative_rms=0
+layer=10 residual max_abs=0 rms=0 relative_rms=0
+layer=11 residual max_abs=0 rms=0 relative_rms=0
+layer=12 residual max_abs=0 rms=0 relative_rms=0
+layer=13 residual max_abs=0 rms=0 relative_rms=0
+layer=14 residual max_abs=0 rms=0 relative_rms=0
+layer=15 residual max_abs=0 rms=0 relative_rms=0
+layer=16 residual max_abs=0 rms=0 relative_rms=0
+layer=17 residual max_abs=0 rms=0 relative_rms=0
+layer=18 residual max_abs=0 rms=0 relative_rms=0
+layer=19 residual max_abs=0 rms=0 relative_rms=0
+layer=20 residual max_abs=0 rms=0 relative_rms=0
+layer=21 residual max_abs=0 rms=0 relative_rms=0
+layer=22 residual max_abs=0 rms=0 relative_rms=0
+layer=23 residual max_abs=0 rms=0 relative_rms=0
+layer=24 residual max_abs=0 rms=0 relative_rms=0
+layer=25 residual max_abs=0 rms=0 relative_rms=0
+layer=26 residual max_abs=0 rms=0 relative_rms=0
+layer=27 residual max_abs=0 rms=0 relative_rms=0
+layer=28 residual max_abs=0 rms=0 relative_rms=0
+layer=29 residual max_abs=0 rms=0 relative_rms=0
+layer=30 residual max_abs=0 rms=0 relative_rms=0
+layer=31 residual max_abs=0 rms=0 relative_rms=0
+layer=32 residual max_abs=0 rms=0 relative_rms=0
+layer=33 residual max_abs=0 rms=0 relative_rms=0
+layer=34 residual max_abs=0 rms=0 relative_rms=0
+layer=35 residual max_abs=0 rms=0 relative_rms=0
+layer=36 residual max_abs=0 rms=0 relative_rms=0
+layer=37 residual max_abs=0 rms=0 relative_rms=0
+layer=38 residual max_abs=0 rms=0 relative_rms=0
+layer=39 residual max_abs=0 rms=0 relative_rms=0
+hidden max_abs=0 rms=0 relative_rms=0
+logits max_abs=0 rms=0 relative_rms=0
+distribution kl=0 top10_overlap=10/10
+top1=10504/10504
+token=13 id=10504
+layer=0 residual max_abs=0 rms=0 relative_rms=0
+layer=1 residual max_abs=0 rms=0 relative_rms=0
+layer=2 residual max_abs=0 rms=0 relative_rms=0
+layer=3 residual max_abs=0 rms=0 relative_rms=0
+layer=4 residual max_abs=0 rms=0 relative_rms=0
+layer=5 residual max_abs=0 rms=0 relative_rms=0
+layer=6 residual max_abs=0 rms=0 relative_rms=0
+layer=7 residual max_abs=0 rms=0 relative_rms=0
+layer=8 residual max_abs=0 rms=0 relative_rms=0
+layer=9 residual max_abs=0 rms=0 relative_rms=0
+layer=10 residual max_abs=0 rms=0 relative_rms=0
+layer=11 residual max_abs=0 rms=0 relative_rms=0
+layer=12 residual max_abs=0 rms=0 relative_rms=0
+layer=13 residual max_abs=0 rms=0 relative_rms=0
+layer=14 residual max_abs=0 rms=0 relative_rms=0
+layer=15 residual max_abs=0 rms=0 relative_rms=0
+layer=16 residual max_abs=0 rms=0 relative_rms=0
+layer=17 residual max_abs=0 rms=0 relative_rms=0
+layer=18 residual max_abs=0 rms=0 relative_rms=0
+layer=19 residual max_abs=0 rms=0 relative_rms=0
+layer=20 residual max_abs=0 rms=0 relative_rms=0
+layer=21 residual max_abs=0 rms=0 relative_rms=0
+layer=22 residual max_abs=0 rms=0 relative_rms=0
+layer=23 residual max_abs=0 rms=0 relative_rms=0
+layer=24 residual max_abs=0 rms=0 relative_rms=0
+layer=25 residual max_abs=0 rms=0 relative_rms=0
+layer=26 residual max_abs=0 rms=0 relative_rms=0
+layer=27 residual max_abs=0 rms=0 relative_rms=0
+layer=28 residual max_abs=0 rms=0 relative_rms=0
+layer=29 residual max_abs=0 rms=0 relative_rms=0
+layer=30 residual max_abs=0 rms=0 relative_rms=0
+layer=31 residual max_abs=0 rms=0 relative_rms=0
+layer=32 residual max_abs=0 rms=0 relative_rms=0
+layer=33 residual max_abs=0 rms=0 relative_rms=0
+layer=34 residual max_abs=0 rms=0 relative_rms=0
+layer=35 residual max_abs=0 rms=0 relative_rms=0
+layer=36 residual max_abs=0 rms=0 relative_rms=0
+layer=37 residual max_abs=0 rms=0 relative_rms=0
+layer=38 residual max_abs=0 rms=0 relative_rms=0
+layer=39 residual max_abs=0 rms=0 relative_rms=0
+hidden max_abs=0 rms=0 relative_rms=0
+logits max_abs=0 rms=0 relative_rms=0
+distribution kl=0 top10_overlap=10/10
+top1=198/198
+token=14 id=198
+layer=0 residual max_abs=0 rms=0 relative_rms=0
+layer=1 residual max_abs=0 rms=0 relative_rms=0
+layer=2 residual max_abs=0 rms=0 relative_rms=0
+layer=3 residual max_abs=0 rms=0 relative_rms=0
+layer=4 residual max_abs=0 rms=0 relative_rms=0
+layer=5 residual max_abs=0 rms=0 relative_rms=0
+layer=6 residual max_abs=0 rms=0 relative_rms=0
+layer=7 residual max_abs=0 rms=0 relative_rms=0
+layer=8 residual max_abs=0 rms=0 relative_rms=0
+layer=9 residual max_abs=0 rms=0 relative_rms=0
+layer=10 residual max_abs=0 rms=0 relative_rms=0
+layer=11 residual max_abs=0 rms=0 relative_rms=0
+layer=12 residual max_abs=0 rms=0 relative_rms=0
+layer=13 residual max_abs=0 rms=0 relative_rms=0
+layer=14 residual max_abs=0 rms=0 relative_rms=0
+layer=15 residual max_abs=0 rms=0 relative_rms=0
+layer=16 residual max_abs=0 rms=0 relative_rms=0
+layer=17 residual max_abs=0 rms=0 relative_rms=0
+layer=18 residual max_abs=0 rms=0 relative_rms=0
+layer=19 residual max_abs=0 rms=0 relative_rms=0
+layer=20 residual max_abs=0 rms=0 relative_rms=0
+layer=21 residual max_abs=0 rms=0 relative_rms=0
+layer=22 residual max_abs=0 rms=0 relative_rms=0
+layer=23 residual max_abs=0 rms=0 relative_rms=0
+layer=24 residual max_abs=0 rms=0 relative_rms=0
+layer=25 residual max_abs=0 rms=0 relative_rms=0
+layer=26 residual max_abs=0 rms=0 relative_rms=0
+layer=27 residual max_abs=0 rms=0 relative_rms=0
+layer=28 residual max_abs=0 rms=0 relative_rms=0
+layer=29 residual max_abs=0 rms=0 relative_rms=0
+layer=30 residual max_abs=0 rms=0 relative_rms=0
+layer=31 residual max_abs=0 rms=0 relative_rms=0
+layer=32 residual max_abs=0 rms=0 relative_rms=0
+layer=33 residual max_abs=0 rms=0 relative_rms=0
+layer=34 residual max_abs=0 rms=0 relative_rms=0
+layer=35 residual max_abs=0 rms=0 relative_rms=0
+layer=36 residual max_abs=0 rms=0 relative_rms=0
+layer=37 residual max_abs=0 rms=0 relative_rms=0
+layer=38 residual max_abs=0 rms=0 relative_rms=0
+layer=39 residual max_abs=0 rms=0 relative_rms=0
+hidden max_abs=0 rms=0 relative_rms=0
+logits max_abs=0 rms=0 relative_rms=0
+distribution kl=0 top10_overlap=10/10
+top1=1032/1032
+token=15 id=1032
+layer=0 residual max_abs=0 rms=0 relative_rms=0
+layer=1 residual max_abs=0 rms=0 relative_rms=0
+layer=2 residual max_abs=0 rms=0 relative_rms=0
+layer=3 residual max_abs=0 rms=0 relative_rms=0
+layer=4 residual max_abs=0 rms=0 relative_rms=0
+layer=5 residual max_abs=0 rms=0 relative_rms=0
+layer=6 residual max_abs=0 rms=0 relative_rms=0
+layer=7 residual max_abs=0 rms=0 relative_rms=0
+layer=8 residual max_abs=0 rms=0 relative_rms=0
+layer=9 residual max_abs=0 rms=0 relative_rms=0
+layer=10 residual max_abs=0 rms=0 relative_rms=0
+layer=11 residual max_abs=0 rms=0 relative_rms=0
+layer=12 residual max_abs=0 rms=0 relative_rms=0
+layer=13 residual max_abs=0 rms=0 relative_rms=0
+layer=14 residual max_abs=0 rms=0 relative_rms=0
+layer=15 residual max_abs=0 rms=0 relative_rms=0
+layer=16 residual max_abs=0 rms=0 relative_rms=0
+layer=17 residual max_abs=0 rms=0 relative_rms=0
+layer=18 residual max_abs=0 rms=0 relative_rms=0
+layer=19 residual max_abs=0 rms=0 relative_rms=0
+layer=20 residual max_abs=0 rms=0 relative_rms=0
+layer=21 residual max_abs=0 rms=0 relative_rms=0
+layer=22 residual max_abs=0 rms=0 relative_rms=0
+layer=23 residual max_abs=0 rms=0 relative_rms=0
+layer=24 residual max_abs=0 rms=0 relative_rms=0
+layer=25 residual max_abs=0 rms=0 relative_rms=0
+layer=26 residual max_abs=0 rms=0 relative_rms=0
+layer=27 residual max_abs=0 rms=0 relative_rms=0
+layer=28 residual max_abs=0 rms=0 relative_rms=0
+layer=29 residual max_abs=0 rms=0 relative_rms=0
+layer=30 residual max_abs=0 rms=0 relative_rms=0
+layer=31 residual max_abs=0 rms=0 relative_rms=0
+layer=32 residual max_abs=0 rms=0 relative_rms=0
+layer=33 residual max_abs=0 rms=0 relative_rms=0
+layer=34 residual max_abs=0 rms=0 relative_rms=0
+layer=35 residual max_abs=0 rms=0 relative_rms=0
+layer=36 residual max_abs=0 rms=0 relative_rms=0
+layer=37 residual max_abs=0 rms=0 relative_rms=0
+layer=38 residual max_abs=0 rms=0 relative_rms=0
+layer=39 residual max_abs=0 rms=0 relative_rms=0
+hidden max_abs=0 rms=0 relative_rms=0
+logits max_abs=0 rms=0 relative_rms=0
+distribution kl=0 top10_overlap=10/10
+top1=361/361
+token=16 id=361
+layer=0 residual max_abs=0 rms=0 relative_rms=0
+layer=1 residual max_abs=0 rms=0 relative_rms=0
+layer=2 residual max_abs=0 rms=0 relative_rms=0
+layer=3 residual max_abs=0 rms=0 relative_rms=0
+layer=4 residual max_abs=0 rms=0 relative_rms=0
+layer=5 residual max_abs=0 rms=0 relative_rms=0
+layer=6 residual max_abs=0 rms=0 relative_rms=0
+layer=7 residual max_abs=0 rms=0 relative_rms=0
+layer=8 residual max_abs=0 rms=0 relative_rms=0
+layer=9 residual max_abs=0 rms=0 relative_rms=0
+layer=10 residual max_abs=0 rms=0 relative_rms=0
+layer=11 residual max_abs=0 rms=0 relative_rms=0
+layer=12 residual max_abs=0 rms=0 relative_rms=0
+layer=13 residual max_abs=0 rms=0 relative_rms=0
+layer=14 residual max_abs=0 rms=0 relative_rms=0
+layer=15 residual max_abs=0 rms=0 relative_rms=0
+layer=16 residual max_abs=0 rms=0 relative_rms=0
+layer=17 residual max_abs=0 rms=0 relative_rms=0
+layer=18 residual max_abs=0 rms=0 relative_rms=0
+layer=19 residual max_abs=0 rms=0 relative_rms=0
+layer=20 residual max_abs=0 rms=0 relative_rms=0
+layer=21 residual max_abs=0 rms=0 relative_rms=0
+layer=22 residual max_abs=0 rms=0 relative_rms=0
+layer=23 residual max_abs=0 rms=0 relative_rms=0
+layer=24 residual max_abs=0 rms=0 relative_rms=0
+layer=25 residual max_abs=0 rms=0 relative_rms=0
+layer=26 residual max_abs=0 rms=0 relative_rms=0
+layer=27 residual max_abs=0 rms=0 relative_rms=0
+layer=28 residual max_abs=0 rms=0 relative_rms=0
+layer=29 residual max_abs=0 rms=0 relative_rms=0
+layer=30 residual max_abs=0 rms=0 relative_rms=0
+layer=31 residual max_abs=0 rms=0 relative_rms=0
+layer=32 residual max_abs=0 rms=0 relative_rms=0
+layer=33 residual max_abs=0 rms=0 relative_rms=0
+layer=34 residual max_abs=0 rms=0 relative_rms=0
+layer=35 residual max_abs=0 rms=0 relative_rms=0
+layer=36 residual max_abs=0 rms=0 relative_rms=0
+layer=37 residual max_abs=0 rms=0 relative_rms=0
+layer=38 residual max_abs=0 rms=0 relative_rms=0
+layer=39 residual max_abs=0 rms=0 relative_rms=0
+hidden max_abs=0 rms=0 relative_rms=0
+logits max_abs=0 rms=0 relative_rms=0
+distribution kl=0 top10_overlap=10/10
+top1=9377/9377
+token=17 id=9377
+layer=0 residual max_abs=0 rms=0 relative_rms=0
+layer=1 residual max_abs=0 rms=0 relative_rms=0
+layer=2 residual max_abs=0 rms=0 relative_rms=0
+layer=3 residual max_abs=0 rms=0 relative_rms=0
+layer=4 residual max_abs=0 rms=0 relative_rms=0
+layer=5 residual max_abs=0 rms=0 relative_rms=0
+layer=6 residual max_abs=0 rms=0 relative_rms=0
+layer=7 residual max_abs=0 rms=0 relative_rms=0
+layer=8 residual max_abs=0 rms=0 relative_rms=0
+layer=9 residual max_abs=0 rms=0 relative_rms=0
+layer=10 residual max_abs=0 rms=0 relative_rms=0
+layer=11 residual max_abs=0 rms=0 relative_rms=0
+layer=12 residual max_abs=0 rms=0 relative_rms=0
+layer=13 residual max_abs=0 rms=0 relative_rms=0
+layer=14 residual max_abs=0 rms=0 relative_rms=0
+layer=15 residual max_abs=0 rms=0 relative_rms=0
+layer=16 residual max_abs=0 rms=0 relative_rms=0
+layer=17 residual max_abs=0 rms=0 relative_rms=0
+layer=18 residual max_abs=0 rms=0 relative_rms=0
+layer=19 residual max_abs=0 rms=0 relative_rms=0
+layer=20 residual max_abs=0 rms=0 relative_rms=0
+layer=21 residual max_abs=0 rms=0 relative_rms=0
+layer=22 residual max_abs=0 rms=0 relative_rms=0
+layer=23 residual max_abs=0 rms=0 relative_rms=0
+layer=24 residual max_abs=0 rms=0 relative_rms=0
+layer=25 residual max_abs=0 rms=0 relative_rms=0
+layer=26 residual max_abs=0 rms=0 relative_rms=0
+layer=27 residual max_abs=0 rms=0 relative_rms=0
+layer=28 residual max_abs=0 rms=0 relative_rms=0
+layer=29 residual max_abs=0 rms=0 relative_rms=0
+layer=30 residual max_abs=0 rms=0 relative_rms=0
+layer=31 residual max_abs=0 rms=0 relative_rms=0
+layer=32 residual max_abs=0 rms=0 relative_rms=0
+layer=33 residual max_abs=0 rms=0 relative_rms=0
+layer=34 residual max_abs=0 rms=0 relative_rms=0
+layer=35 residual max_abs=0 rms=0 relative_rms=0
+layer=36 residual max_abs=0 rms=0 relative_rms=0
+layer=37 residual max_abs=0 rms=0 relative_rms=0
+layer=38 residual max_abs=0 rms=0 relative_rms=0
+layer=39 residual max_abs=0 rms=0 relative_rms=0
+hidden max_abs=0 rms=0 relative_rms=0
+logits max_abs=0 rms=0 relative_rms=0
+distribution kl=0 top10_overlap=10/10
+top1=29/29
+token=18 id=29
+layer=0 residual max_abs=0 rms=0 relative_rms=0
+layer=1 residual max_abs=0 rms=0 relative_rms=0
+layer=2 residual max_abs=0 rms=0 relative_rms=0
+layer=3 residual max_abs=0 rms=0 relative_rms=0
+layer=4 residual max_abs=0 rms=0 relative_rms=0
+layer=5 residual max_abs=0 rms=0 relative_rms=0
+layer=6 residual max_abs=0 rms=0 relative_rms=0
+layer=7 residual max_abs=0 rms=0 relative_rms=0
+layer=8 residual max_abs=0 rms=0 relative_rms=0
+layer=9 residual max_abs=0 rms=0 relative_rms=0
+layer=10 residual max_abs=0 rms=0 relative_rms=0
+layer=11 residual max_abs=0 rms=0 relative_rms=0
+layer=12 residual max_abs=0 rms=0 relative_rms=0
+layer=13 residual max_abs=0 rms=0 relative_rms=0
+layer=14 residual max_abs=0 rms=0 relative_rms=0
+layer=15 residual max_abs=0 rms=0 relative_rms=0
+layer=16 residual max_abs=0 rms=0 relative_rms=0
+layer=17 residual max_abs=0 rms=0 relative_rms=0
+layer=18 residual max_abs=0 rms=0 relative_rms=0
+layer=19 residual max_abs=0 rms=0 relative_rms=0
+layer=20 residual max_abs=0 rms=0 relative_rms=0
+layer=21 residual max_abs=0 rms=0 relative_rms=0
+layer=22 residual max_abs=0 rms=0 relative_rms=0
+layer=23 residual max_abs=0 rms=0 relative_rms=0
+layer=24 residual max_abs=0 rms=0 relative_rms=0
+layer=25 residual max_abs=0 rms=0 relative_rms=0
+layer=26 residual max_abs=0 rms=0 relative_rms=0
+layer=27 residual max_abs=0 rms=0 relative_rms=0
+layer=28 residual max_abs=0 rms=0 relative_rms=0
+layer=29 residual max_abs=0 rms=0 relative_rms=0
+layer=30 residual max_abs=0 rms=0 relative_rms=0
+layer=31 residual max_abs=0 rms=0 relative_rms=0
+layer=32 residual max_abs=0 rms=0 relative_rms=0
+layer=33 residual max_abs=0 rms=0 relative_rms=0
+layer=34 residual max_abs=0 rms=0 relative_rms=0
+layer=35 residual max_abs=0 rms=0 relative_rms=0
+layer=36 residual max_abs=0 rms=0 relative_rms=0
+layer=37 residual max_abs=0 rms=0 relative_rms=0
+layer=38 residual max_abs=0 rms=0 relative_rms=0
+layer=39 residual max_abs=0 rms=0 relative_rms=0
+hidden max_abs=0 rms=0 relative_rms=0
+logits max_abs=0 rms=0 relative_rms=0
+distribution kl=0 top10_overlap=10/10
+top1=198/198
+token=19 id=198
+layer=0 residual max_abs=0 rms=0 relative_rms=0
+layer=1 residual max_abs=0 rms=0 relative_rms=0
+layer=2 residual max_abs=0 rms=0 relative_rms=0
+layer=3 residual max_abs=0 rms=0 relative_rms=0
+layer=4 residual max_abs=0 rms=0 relative_rms=0
+layer=5 residual max_abs=0 rms=0 relative_rms=0
+layer=6 residual max_abs=0 rms=0 relative_rms=0
+layer=7 residual max_abs=0 rms=0 relative_rms=0
+layer=8 residual max_abs=0 rms=0 relative_rms=0
+layer=9 residual max_abs=0 rms=0 relative_rms=0
+layer=10 residual max_abs=0 rms=0 relative_rms=0
+layer=11 residual max_abs=0 rms=0 relative_rms=0
+layer=12 residual max_abs=0 rms=0 relative_rms=0
+layer=13 residual max_abs=0 rms=0 relative_rms=0
+layer=14 residual max_abs=0 rms=0 relative_rms=0
+layer=15 residual max_abs=0 rms=0 relative_rms=0
+layer=16 residual max_abs=0 rms=0 relative_rms=0
+layer=17 residual max_abs=0 rms=0 relative_rms=0
+layer=18 residual max_abs=0 rms=0 relative_rms=0
+layer=19 residual max_abs=0 rms=0 relative_rms=0
+layer=20 residual max_abs=0 rms=0 relative_rms=0
+layer=21 residual max_abs=0 rms=0 relative_rms=0
+layer=22 residual max_abs=0 rms=0 relative_rms=0
+layer=23 residual max_abs=0 rms=0 relative_rms=0
+layer=24 residual max_abs=0 rms=0 relative_rms=0
+layer=25 residual max_abs=0 rms=0 relative_rms=0
+layer=26 residual max_abs=0 rms=0 relative_rms=0
+layer=27 residual max_abs=0 rms=0 relative_rms=0
+layer=28 residual max_abs=0 rms=0 relative_rms=0
+layer=29 residual max_abs=0 rms=0 relative_rms=0
+layer=30 residual max_abs=0 rms=0 relative_rms=0
+layer=31 residual max_abs=0 rms=0 relative_rms=0
+layer=32 residual max_abs=0 rms=0 relative_rms=0
+layer=33 residual max_abs=0 rms=0 relative_rms=0
+layer=34 residual max_abs=0 rms=0 relative_rms=0
+layer=35 residual max_abs=0 rms=0 relative_rms=0
+layer=36 residual max_abs=0 rms=0 relative_rms=0
+layer=37 residual max_abs=0 rms=0 relative_rms=0
+layer=38 residual max_abs=0 rms=0 relative_rms=0
+layer=39 residual max_abs=0 rms=0 relative_rms=0
+hidden max_abs=0 rms=0 relative_rms=0
+logits max_abs=0 rms=0 relative_rms=0
+distribution kl=0 top10_overlap=10/10
+top1=1032/1032
+token=20 id=1032
+layer=0 residual max_abs=0 rms=0 relative_rms=0
+layer=1 residual max_abs=0 rms=0 relative_rms=0
+layer=2 residual max_abs=0 rms=0 relative_rms=0
+layer=3 residual max_abs=0 rms=0 relative_rms=0
+layer=4 residual max_abs=0 rms=0 relative_rms=0
+layer=5 residual max_abs=0 rms=0 relative_rms=0
+layer=6 residual max_abs=0 rms=0 relative_rms=0
+layer=7 residual max_abs=0 rms=0 relative_rms=0
+layer=8 residual max_abs=0 rms=0 relative_rms=0
+layer=9 residual max_abs=0 rms=0 relative_rms=0
+layer=10 residual max_abs=0 rms=0 relative_rms=0
+layer=11 residual max_abs=0 rms=0 relative_rms=0
+layer=12 residual max_abs=0 rms=0 relative_rms=0
+layer=13 residual max_abs=0 rms=0 relative_rms=0
+layer=14 residual max_abs=0 rms=0 relative_rms=0
+layer=15 residual max_abs=0 rms=0 relative_rms=0
+layer=16 residual max_abs=0 rms=0 relative_rms=0
+layer=17 residual max_abs=0 rms=0 relative_rms=0
+layer=18 residual max_abs=0 rms=0 relative_rms=0
+layer=19 residual max_abs=0 rms=0 relative_rms=0
+layer=20 residual max_abs=0 rms=0 relative_rms=0
+layer=21 residual max_abs=0 rms=0 relative_rms=0
+layer=22 residual max_abs=0 rms=0 relative_rms=0
+layer=23 residual max_abs=0 rms=0 relative_rms=0
+layer=24 residual max_abs=0 rms=0 relative_rms=0
+layer=25 residual max_abs=0 rms=0 relative_rms=0
+layer=26 residual max_abs=0 rms=0 relative_rms=0
+layer=27 residual max_abs=0 rms=0 relative_rms=0
+layer=28 residual max_abs=0 rms=0 relative_rms=0
+layer=29 residual max_abs=0 rms=0 relative_rms=0
+layer=30 residual max_abs=0 rms=0 relative_rms=0
+layer=31 residual max_abs=0 rms=0 relative_rms=0
+layer=32 residual max_abs=0 rms=0 relative_rms=0
+layer=33 residual max_abs=0 rms=0 relative_rms=0
+layer=34 residual max_abs=0 rms=0 relative_rms=0
+layer=35 residual max_abs=0 rms=0 relative_rms=0
+layer=36 residual max_abs=0 rms=0 relative_rms=0
+layer=37 residual max_abs=0 rms=0 relative_rms=0
+layer=38 residual max_abs=0 rms=0 relative_rms=0
+layer=39 residual max_abs=0 rms=0 relative_rms=0
+hidden max_abs=0 rms=0 relative_rms=0
+logits max_abs=0 rms=0 relative_rms=0
+distribution kl=0 top10_overlap=10/10
+top1=361/361
+token=21 id=361
+layer=0 residual max_abs=0 rms=0 relative_rms=0
+layer=1 residual max_abs=0 rms=0 relative_rms=0
+layer=2 residual max_abs=0 rms=0 relative_rms=0
+layer=3 residual max_abs=0 rms=0 relative_rms=0
+layer=4 residual max_abs=0 rms=0 relative_rms=0
+layer=5 residual max_abs=0 rms=0 relative_rms=0
+layer=6 residual max_abs=0 rms=0 relative_rms=0
+layer=7 residual max_abs=0 rms=0 relative_rms=0
+layer=8 residual max_abs=0 rms=0 relative_rms=0
+layer=9 residual max_abs=0 rms=0 relative_rms=0
+layer=10 residual max_abs=0 rms=0 relative_rms=0
+layer=11 residual max_abs=0 rms=0 relative_rms=0
+layer=12 residual max_abs=0 rms=0 relative_rms=0
+layer=13 residual max_abs=0 rms=0 relative_rms=0
+layer=14 residual max_abs=0 rms=0 relative_rms=0
+layer=15 residual max_abs=0 rms=0 relative_rms=0
+layer=16 residual max_abs=0 rms=0 relative_rms=0
+layer=17 residual max_abs=0 rms=0 relative_rms=0
+layer=18 residual max_abs=0 rms=0 relative_rms=0
+layer=19 residual max_abs=0 rms=0 relative_rms=0
+layer=20 residual max_abs=0 rms=0 relative_rms=0
+layer=21 residual max_abs=0 rms=0 relative_rms=0
+layer=22 residual max_abs=0 rms=0 relative_rms=0
+layer=23 residual max_abs=0 rms=0 relative_rms=0
+layer=24 residual max_abs=0 rms=0 relative_rms=0
+layer=25 residual max_abs=0 rms=0 relative_rms=0
+layer=26 residual max_abs=0 rms=0 relative_rms=0
+layer=27 residual max_abs=0 rms=0 relative_rms=0
+layer=28 residual max_abs=0 rms=0 relative_rms=0
+layer=29 residual max_abs=0 rms=0 relative_rms=0
+layer=30 residual max_abs=0 rms=0 relative_rms=0
+layer=31 residual max_abs=0 rms=0 relative_rms=0
+layer=32 residual max_abs=0 rms=0 relative_rms=0
+layer=33 residual max_abs=0 rms=0 relative_rms=0
+layer=34 residual max_abs=0 rms=0 relative_rms=0
+layer=35 residual max_abs=0 rms=0 relative_rms=0
+layer=36 residual max_abs=0 rms=0 relative_rms=0
+layer=37 residual max_abs=0 rms=0 relative_rms=0
+layer=38 residual max_abs=0 rms=0 relative_rms=0
+layer=39 residual max_abs=0 rms=0 relative_rms=0
+hidden max_abs=0 rms=0 relative_rms=0
+logits max_abs=0 rms=0 relative_rms=0
+distribution kl=0 top10_overlap=10/10
+top1=889/889
+token=22 id=889
+layer=0 residual max_abs=0 rms=0 relative_rms=0
+layer=1 residual max_abs=0 rms=0 relative_rms=0
+layer=2 residual max_abs=0 rms=0 relative_rms=0
+layer=3 residual max_abs=0 rms=0 relative_rms=0
+layer=4 residual max_abs=0 rms=0 relative_rms=0
+layer=5 residual max_abs=0 rms=0 relative_rms=0
+layer=6 residual max_abs=0 rms=0 relative_rms=0
+layer=7 residual max_abs=0 rms=0 relative_rms=0
+layer=8 residual max_abs=0 rms=0 relative_rms=0
+layer=9 residual max_abs=0 rms=0 relative_rms=0
+layer=10 residual max_abs=0 rms=0 relative_rms=0
+layer=11 residual max_abs=0 rms=0 relative_rms=0
+layer=12 residual max_abs=0 rms=0 relative_rms=0
+layer=13 residual max_abs=0 rms=0 relative_rms=0
+layer=14 residual max_abs=0 rms=0 relative_rms=0
+layer=15 residual max_abs=0 rms=0 relative_rms=0
+layer=16 residual max_abs=0 rms=0 relative_rms=0
+layer=17 residual max_abs=0 rms=0 relative_rms=0
+layer=18 residual max_abs=0 rms=0 relative_rms=0
+layer=19 residual max_abs=0 rms=0 relative_rms=0
+layer=20 residual max_abs=0 rms=0 relative_rms=0
+layer=21 residual max_abs=0 rms=0 relative_rms=0
+layer=22 residual max_abs=0 rms=0 relative_rms=0
+layer=23 residual max_abs=0 rms=0 relative_rms=0
+layer=24 residual max_abs=0 rms=0 relative_rms=0
+layer=25 residual max_abs=0 rms=0 relative_rms=0
+layer=26 residual max_abs=0 rms=0 relative_rms=0
+layer=27 residual max_abs=0 rms=0 relative_rms=0
+layer=28 residual max_abs=0 rms=0 relative_rms=0
+layer=29 residual max_abs=0 rms=0 relative_rms=0
+layer=30 residual max_abs=0 rms=0 relative_rms=0
+layer=31 residual max_abs=0 rms=0 relative_rms=0
+layer=32 residual max_abs=0 rms=0 relative_rms=0
+layer=33 residual max_abs=0 rms=0 relative_rms=0
+layer=34 residual max_abs=0 rms=0 relative_rms=0
+layer=35 residual max_abs=0 rms=0 relative_rms=0
+layer=36 residual max_abs=0 rms=0 relative_rms=0
+layer=37 residual max_abs=0 rms=0 relative_rms=0
+layer=38 residual max_abs=0 rms=0 relative_rms=0
+layer=39 residual max_abs=0 rms=0 relative_rms=0
+hidden max_abs=0 rms=0 relative_rms=0
+logits max_abs=0 rms=0 relative_rms=0
+distribution kl=0 top10_overlap=10/10
+top1=29/29
+token=23 id=29
+layer=0 residual max_abs=0 rms=0 relative_rms=0
+layer=1 residual max_abs=0 rms=0 relative_rms=0
+layer=2 residual max_abs=0 rms=0 relative_rms=0
+layer=3 residual max_abs=0 rms=0 relative_rms=0
+layer=4 residual max_abs=0 rms=0 relative_rms=0
+layer=5 residual max_abs=0 rms=0 relative_rms=0
+layer=6 residual max_abs=0 rms=0 relative_rms=0
+layer=7 residual max_abs=0 rms=0 relative_rms=0
+layer=8 residual max_abs=0 rms=0 relative_rms=0
+layer=9 residual max_abs=0 rms=0 relative_rms=0
+layer=10 residual max_abs=0 rms=0 relative_rms=0
+layer=11 residual max_abs=0 rms=0 relative_rms=0
+layer=12 residual max_abs=0 rms=0 relative_rms=0
+layer=13 residual max_abs=0 rms=0 relative_rms=0
+layer=14 residual max_abs=0 rms=0 relative_rms=0
+layer=15 residual max_abs=0 rms=0 relative_rms=0
+layer=16 residual max_abs=0 rms=0 relative_rms=0
+layer=17 residual max_abs=0 rms=0 relative_rms=0
+layer=18 residual max_abs=0 rms=0 relative_rms=0
+layer=19 residual max_abs=0 rms=0 relative_rms=0
+layer=20 residual max_abs=0 rms=0 relative_rms=0
+layer=21 residual max_abs=0 rms=0 relative_rms=0
+layer=22 residual max_abs=0 rms=0 relative_rms=0
+layer=23 residual max_abs=0 rms=0 relative_rms=0
+layer=24 residual max_abs=0 rms=0 relative_rms=0
+layer=25 residual max_abs=0 rms=0 relative_rms=0
+layer=26 residual max_abs=0 rms=0 relative_rms=0
+layer=27 residual max_abs=0 rms=0 relative_rms=0
+layer=28 residual max_abs=0 rms=0 relative_rms=0
+layer=29 residual max_abs=0 rms=0 relative_rms=0
+layer=30 residual max_abs=0 rms=0 relative_rms=0
+layer=31 residual max_abs=0 rms=0 relative_rms=0
+layer=32 residual max_abs=0 rms=0 relative_rms=0
+layer=33 residual max_abs=0 rms=0 relative_rms=0
+layer=34 residual max_abs=0 rms=0 relative_rms=0
+layer=35 residual max_abs=0 rms=0 relative_rms=0
+layer=36 residual max_abs=0 rms=0 relative_rms=0
+layer=37 residual max_abs=0 rms=0 relative_rms=0
+layer=38 residual max_abs=0 rms=0 relative_rms=0
+layer=39 residual max_abs=0 rms=0 relative_rms=0
+hidden max_abs=0 rms=0 relative_rms=0
+logits max_abs=0 rms=0 relative_rms=0
+distribution kl=0 top10_overlap=10/10
+top1=198/198
+token=24 id=198
+layer=0 residual max_abs=0 rms=0 relative_rms=0
+layer=1 residual max_abs=0 rms=0 relative_rms=0
+layer=2 residual max_abs=0 rms=0 relative_rms=0
+layer=3 residual max_abs=0 rms=0 relative_rms=0
+layer=4 residual max_abs=0 rms=0 relative_rms=0
+layer=5 residual max_abs=0 rms=0 relative_rms=0
+layer=6 residual max_abs=0 rms=0 relative_rms=0
+layer=7 residual max_abs=0 rms=0 relative_rms=0
+layer=8 residual max_abs=0 rms=0 relative_rms=0
+layer=9 residual max_abs=0 rms=0 relative_rms=0
+layer=10 residual max_abs=0 rms=0 relative_rms=0
+layer=11 residual max_abs=0 rms=0 relative_rms=0
+layer=12 residual max_abs=0 rms=0 relative_rms=0
+layer=13 residual max_abs=0 rms=0 relative_rms=0
+layer=14 residual max_abs=0 rms=0 relative_rms=0
+layer=15 residual max_abs=0 rms=0 relative_rms=0
+layer=16 residual max_abs=0 rms=0 relative_rms=0
+layer=17 residual max_abs=0 rms=0 relative_rms=0
+layer=18 residual max_abs=0 rms=0 relative_rms=0
+layer=19 residual max_abs=0 rms=0 relative_rms=0
+layer=20 residual max_abs=0 rms=0 relative_rms=0
+layer=21 residual max_abs=0 rms=0 relative_rms=0
+layer=22 residual max_abs=0 rms=0 relative_rms=0
+layer=23 residual max_abs=0 rms=0 relative_rms=0
+layer=24 residual max_abs=0 rms=0 relative_rms=0
+layer=25 residual max_abs=0 rms=0 relative_rms=0
+layer=26 residual max_abs=0 rms=0 relative_rms=0
+layer=27 residual max_abs=0 rms=0 relative_rms=0
+layer=28 residual max_abs=0 rms=0 relative_rms=0
+layer=29 residual max_abs=0 rms=0 relative_rms=0
+layer=30 residual max_abs=0 rms=0 relative_rms=0
+layer=31 residual max_abs=0 rms=0 relative_rms=0
+layer=32 residual max_abs=0 rms=0 relative_rms=0
+layer=33 residual max_abs=0 rms=0 relative_rms=0
+layer=34 residual max_abs=0 rms=0 relative_rms=0
+layer=35 residual max_abs=0 rms=0 relative_rms=0
+layer=36 residual max_abs=0 rms=0 relative_rms=0
+layer=37 residual max_abs=0 rms=0 relative_rms=0
+layer=38 residual max_abs=0 rms=0 relative_rms=0
+layer=39 residual max_abs=0 rms=0 relative_rms=0
+hidden max_abs=0 rms=0 relative_rms=0
+logits max_abs=0 rms=0 relative_rms=0
+distribution kl=0 top10_overlap=10/10
+top1=1032/1032
+token=25 id=1032
+layer=0 residual max_abs=0 rms=0 relative_rms=0
+layer=1 residual max_abs=0 rms=0 relative_rms=0
+layer=2 residual max_abs=0 rms=0 relative_rms=0
+layer=3 residual max_abs=0 rms=0 relative_rms=0
+layer=4 residual max_abs=0 rms=0 relative_rms=0
+layer=5 residual max_abs=0 rms=0 relative_rms=0
+layer=6 residual max_abs=0 rms=0 relative_rms=0
+layer=7 residual max_abs=0 rms=0 relative_rms=0
+layer=8 residual max_abs=0 rms=0 relative_rms=0
+layer=9 residual max_abs=0 rms=0 relative_rms=0
+layer=10 residual max_abs=0 rms=0 relative_rms=0
+layer=11 residual max_abs=0 rms=0 relative_rms=0
+layer=12 residual max_abs=0 rms=0 relative_rms=0
+layer=13 residual max_abs=0 rms=0 relative_rms=0
+layer=14 residual max_abs=0 rms=0 relative_rms=0
+layer=15 residual max_abs=0 rms=0 relative_rms=0
+layer=16 residual max_abs=0 rms=0 relative_rms=0
+layer=17 residual max_abs=0 rms=0 relative_rms=0
+layer=18 residual max_abs=0 rms=0 relative_rms=0
+layer=19 residual max_abs=0 rms=0 relative_rms=0
+layer=20 residual max_abs=0 rms=0 relative_rms=0
+layer=21 residual max_abs=0 rms=0 relative_rms=0
+layer=22 residual max_abs=0 rms=0 relative_rms=0
+layer=23 residual max_abs=0 rms=0 relative_rms=0
+layer=24 residual max_abs=0 rms=0 relative_rms=0
+layer=25 residual max_abs=0 rms=0 relative_rms=0
+layer=26 residual max_abs=0 rms=0 relative_rms=0
+layer=27 residual max_abs=0 rms=0 relative_rms=0
+layer=28 residual max_abs=0 rms=0 relative_rms=0
+layer=29 residual max_abs=0 rms=0 relative_rms=0
+layer=30 residual max_abs=0 rms=0 relative_rms=0
+layer=31 residual max_abs=0 rms=0 relative_rms=0
+layer=32 residual max_abs=0 rms=0 relative_rms=0
+layer=33 residual max_abs=0 rms=0 relative_rms=0
+layer=34 residual max_abs=0 rms=0 relative_rms=0
+layer=35 residual max_abs=0 rms=0 relative_rms=0
+layer=36 residual max_abs=0 rms=0 relative_rms=0
+layer=37 residual max_abs=0 rms=0 relative_rms=0
+layer=38 residual max_abs=0 rms=0 relative_rms=0
+layer=39 residual max_abs=0 rms=0 relative_rms=0
+hidden max_abs=0 rms=0 relative_rms=0
+logits max_abs=0 rms=0 relative_rms=0
+distribution kl=0 top10_overlap=10/10
+top1=361/361
+token=26 id=361
+layer=0 residual max_abs=0 rms=0 relative_rms=0
+layer=1 residual max_abs=0 rms=0 relative_rms=0
+layer=2 residual max_abs=0 rms=0 relative_rms=0
+layer=3 residual max_abs=0 rms=0 relative_rms=0
+layer=4 residual max_abs=0 rms=0 relative_rms=0
+layer=5 residual max_abs=0 rms=0 relative_rms=0
+layer=6 residual max_abs=0 rms=0 relative_rms=0
+layer=7 residual max_abs=0 rms=0 relative_rms=0
+layer=8 residual max_abs=0 rms=0 relative_rms=0
+layer=9 residual max_abs=0 rms=0 relative_rms=0
+layer=10 residual max_abs=0 rms=0 relative_rms=0
+layer=11 residual max_abs=0 rms=0 relative_rms=0
+layer=12 residual max_abs=0 rms=0 relative_rms=0
+layer=13 residual max_abs=0 rms=0 relative_rms=0
+layer=14 residual max_abs=0 rms=0 relative_rms=0
+layer=15 residual max_abs=0 rms=0 relative_rms=0
+layer=16 residual max_abs=0 rms=0 relative_rms=0
+layer=17 residual max_abs=0 rms=0 relative_rms=0
+layer=18 residual max_abs=0 rms=0 relative_rms=0
+layer=19 residual max_abs=0 rms=0 relative_rms=0
+layer=20 residual max_abs=0 rms=0 relative_rms=0
+layer=21 residual max_abs=0 rms=0 relative_rms=0
+layer=22 residual max_abs=0 rms=0 relative_rms=0
+layer=23 residual max_abs=0 rms=0 relative_rms=0
+layer=24 residual max_abs=0 rms=0 relative_rms=0
+layer=25 residual max_abs=0 rms=0 relative_rms=0
+layer=26 residual max_abs=0 rms=0 relative_rms=0
+layer=27 residual max_abs=0 rms=0 relative_rms=0
+layer=28 residual max_abs=0 rms=0 relative_rms=0
+layer=29 residual max_abs=0 rms=0 relative_rms=0
+layer=30 residual max_abs=0 rms=0 relative_rms=0
+layer=31 residual max_abs=0 rms=0 relative_rms=0
+layer=32 residual max_abs=0 rms=0 relative_rms=0
+layer=33 residual max_abs=0 rms=0 relative_rms=0
+layer=34 residual max_abs=0 rms=0 relative_rms=0
+layer=35 residual max_abs=0 rms=0 relative_rms=0
+layer=36 residual max_abs=0 rms=0 relative_rms=0
+layer=37 residual max_abs=0 rms=0 relative_rms=0
+layer=38 residual max_abs=0 rms=0 relative_rms=0
+layer=39 residual max_abs=0 rms=0 relative_rms=0
+hidden max_abs=0 rms=0 relative_rms=0
+logits max_abs=0 rms=0 relative_rms=0
+distribution kl=0 top10_overlap=10/10
+top1=3112/3112
+token=27 id=3112
+layer=0 residual max_abs=0 rms=0 relative_rms=0
+layer=1 residual max_abs=0 rms=0 relative_rms=0
+layer=2 residual max_abs=0 rms=0 relative_rms=0
+layer=3 residual max_abs=0 rms=0 relative_rms=0
+layer=4 residual max_abs=0 rms=0 relative_rms=0
+layer=5 residual max_abs=0 rms=0 relative_rms=0
+layer=6 residual max_abs=0 rms=0 relative_rms=0
+layer=7 residual max_abs=0 rms=0 relative_rms=0
+layer=8 residual max_abs=0 rms=0 relative_rms=0
+layer=9 residual max_abs=0 rms=0 relative_rms=0
+layer=10 residual max_abs=0 rms=0 relative_rms=0
+layer=11 residual max_abs=0 rms=0 relative_rms=0
+layer=12 residual max_abs=0 rms=0 relative_rms=0
+layer=13 residual max_abs=0 rms=0 relative_rms=0
+layer=14 residual max_abs=0 rms=0 relative_rms=0
+layer=15 residual max_abs=0 rms=0 relative_rms=0
+layer=16 residual max_abs=0 rms=0 relative_rms=0
+layer=17 residual max_abs=0 rms=0 relative_rms=0
+layer=18 residual max_abs=0 rms=0 relative_rms=0
+layer=19 residual max_abs=0 rms=0 relative_rms=0
+layer=20 residual max_abs=0 rms=0 relative_rms=0
+layer=21 residual max_abs=0 rms=0 relative_rms=0
+layer=22 residual max_abs=0 rms=0 relative_rms=0
+layer=23 residual max_abs=0 rms=0 relative_rms=0
+layer=24 residual max_abs=0 rms=0 relative_rms=0
+layer=25 residual max_abs=0 rms=0 relative_rms=0
+layer=26 residual max_abs=0 rms=0 relative_rms=0
+layer=27 residual max_abs=0 rms=0 relative_rms=0
+layer=28 residual max_abs=0 rms=0 relative_rms=0
+layer=29 residual max_abs=0 rms=0 relative_rms=0
+layer=30 residual max_abs=0 rms=0 relative_rms=0
+layer=31 residual max_abs=0 rms=0 relative_rms=0
+layer=32 residual max_abs=0 rms=0 relative_rms=0
+layer=33 residual max_abs=0 rms=0 relative_rms=0
+layer=34 residual max_abs=0 rms=0 relative_rms=0
+layer=35 residual max_abs=0 rms=0 relative_rms=0
+layer=36 residual max_abs=0 rms=0 relative_rms=0
+layer=37 residual max_abs=0 rms=0 relative_rms=0
+layer=38 residual max_abs=0 rms=0 relative_rms=0
+layer=39 residual max_abs=0 rms=0 relative_rms=0
+hidden max_abs=0 rms=0 relative_rms=0
+logits max_abs=0 rms=0 relative_rms=0
+distribution kl=0 top10_overlap=10/10
+top1=29/29
+token=28 id=29
+layer=0 residual max_abs=0 rms=0 relative_rms=0
+layer=1 residual max_abs=0 rms=0 relative_rms=0
+layer=2 residual max_abs=0 rms=0 relative_rms=0
+layer=3 residual max_abs=0 rms=0 relative_rms=0
+layer=4 residual max_abs=0 rms=0 relative_rms=0
+layer=5 residual max_abs=0 rms=0 relative_rms=0
+layer=6 residual max_abs=0 rms=0 relative_rms=0
+layer=7 residual max_abs=0 rms=0 relative_rms=0
+layer=8 residual max_abs=0 rms=0 relative_rms=0
+layer=9 residual max_abs=0 rms=0 relative_rms=0
+layer=10 residual max_abs=0 rms=0 relative_rms=0
+layer=11 residual max_abs=0 rms=0 relative_rms=0
+layer=12 residual max_abs=0 rms=0 relative_rms=0
+layer=13 residual max_abs=0 rms=0 relative_rms=0
+layer=14 residual max_abs=0 rms=0 relative_rms=0
+layer=15 residual max_abs=0 rms=0 relative_rms=0
+layer=16 residual max_abs=0 rms=0 relative_rms=0
+layer=17 residual max_abs=0 rms=0 relative_rms=0
+layer=18 residual max_abs=0 rms=0 relative_rms=0
+layer=19 residual max_abs=0 rms=0 relative_rms=0
+layer=20 residual max_abs=0 rms=0 relative_rms=0
+layer=21 residual max_abs=0 rms=0 relative_rms=0
+layer=22 residual max_abs=0 rms=0 relative_rms=0
+layer=23 residual max_abs=0 rms=0 relative_rms=0
+layer=24 residual max_abs=0 rms=0 relative_rms=0
+layer=25 residual max_abs=0 rms=0 relative_rms=0
+layer=26 residual max_abs=0 rms=0 relative_rms=0
+layer=27 residual max_abs=0 rms=0 relative_rms=0
+layer=28 residual max_abs=0 rms=0 relative_rms=0
+layer=29 residual max_abs=0 rms=0 relative_rms=0
+layer=30 residual max_abs=0 rms=0 relative_rms=0
+layer=31 residual max_abs=0 rms=0 relative_rms=0
+layer=32 residual max_abs=0 rms=0 relative_rms=0
+layer=33 residual max_abs=0 rms=0 relative_rms=0
+layer=34 residual max_abs=0 rms=0 relative_rms=0
+layer=35 residual max_abs=0 rms=0 relative_rms=0
+layer=36 residual max_abs=0 rms=0 relative_rms=0
+layer=37 residual max_abs=0 rms=0 relative_rms=0
+layer=38 residual max_abs=0 rms=0 relative_rms=0
+layer=39 residual max_abs=0 rms=0 relative_rms=0
+hidden max_abs=0 rms=0 relative_rms=0
+logits max_abs=0 rms=0 relative_rms=0
+distribution kl=0 top10_overlap=10/10
+top1=198/198
+token=29 id=198
+layer=0 residual max_abs=0 rms=0 relative_rms=0
+layer=1 residual max_abs=0 rms=0 relative_rms=0
+layer=2 residual max_abs=0 rms=0 relative_rms=0
+layer=3 residual max_abs=0 rms=0 relative_rms=0
+layer=4 residual max_abs=0 rms=0 relative_rms=0
+layer=5 residual max_abs=0 rms=0 relative_rms=0
+layer=6 residual max_abs=0 rms=0 relative_rms=0
+layer=7 residual max_abs=0 rms=0 relative_rms=0
+layer=8 residual max_abs=0 rms=0 relative_rms=0
+layer=9 residual max_abs=0 rms=0 relative_rms=0
+layer=10 residual max_abs=0 rms=0 relative_rms=0
+layer=11 residual max_abs=0 rms=0 relative_rms=0
+layer=12 residual max_abs=0 rms=0 relative_rms=0
+layer=13 residual max_abs=0 rms=0 relative_rms=0
+layer=14 residual max_abs=0 rms=0 relative_rms=0
+layer=15 residual max_abs=0 rms=0 relative_rms=0
+layer=16 residual max_abs=0 rms=0 relative_rms=0
+layer=17 residual max_abs=0 rms=0 relative_rms=0
+layer=18 residual max_abs=0 rms=0 relative_rms=0
+layer=19 residual max_abs=0 rms=0 relative_rms=0
+layer=20 residual max_abs=0 rms=0 relative_rms=0
+layer=21 residual max_abs=0 rms=0 relative_rms=0
+layer=22 residual max_abs=0 rms=0 relative_rms=0
+layer=23 residual max_abs=0 rms=0 relative_rms=0
+layer=24 residual max_abs=0 rms=0 relative_rms=0
+layer=25 residual max_abs=0 rms=0 relative_rms=0
+layer=26 residual max_abs=0 rms=0 relative_rms=0
+layer=27 residual max_abs=0 rms=0 relative_rms=0
+layer=28 residual max_abs=0 rms=0 relative_rms=0
+layer=29 residual max_abs=0 rms=0 relative_rms=0
+layer=30 residual max_abs=0 rms=0 relative_rms=0
+layer=31 residual max_abs=0 rms=0 relative_rms=0
+layer=32 residual max_abs=0 rms=0 relative_rms=0
+layer=33 residual max_abs=0 rms=0 relative_rms=0
+layer=34 residual max_abs=0 rms=0 relative_rms=0
+layer=35 residual max_abs=0 rms=0 relative_rms=0
+layer=36 residual max_abs=0 rms=0 relative_rms=0
+layer=37 residual max_abs=0 rms=0 relative_rms=0
+layer=38 residual max_abs=0 rms=0 relative_rms=0
+layer=39 residual max_abs=0 rms=0 relative_rms=0
+hidden max_abs=0 rms=0 relative_rms=0
+logits max_abs=0 rms=0 relative_rms=0
+distribution kl=0 top10_overlap=10/10
+top1=1032/1032
+token=30 id=1032
+layer=0 residual max_abs=0 rms=0 relative_rms=0
+layer=1 residual max_abs=0 rms=0 relative_rms=0
+layer=2 residual max_abs=0 rms=0 relative_rms=0
+layer=3 residual max_abs=0 rms=0 relative_rms=0
+layer=4 residual max_abs=0 rms=0 relative_rms=0
+layer=5 residual max_abs=0 rms=0 relative_rms=0
+layer=6 residual max_abs=0 rms=0 relative_rms=0
+layer=7 residual max_abs=0 rms=0 relative_rms=0
+layer=8 residual max_abs=0 rms=0 relative_rms=0
+layer=9 residual max_abs=0 rms=0 relative_rms=0
+layer=10 residual max_abs=0 rms=0 relative_rms=0
+layer=11 residual max_abs=0 rms=0 relative_rms=0
+layer=12 residual max_abs=0 rms=0 relative_rms=0
+layer=13 residual max_abs=0 rms=0 relative_rms=0
+layer=14 residual max_abs=0 rms=0 relative_rms=0
+layer=15 residual max_abs=0 rms=0 relative_rms=0
+layer=16 residual max_abs=0 rms=0 relative_rms=0
+layer=17 residual max_abs=0 rms=0 relative_rms=0
+layer=18 residual max_abs=0 rms=0 relative_rms=0
+layer=19 residual max_abs=0 rms=0 relative_rms=0
+layer=20 residual max_abs=0 rms=0 relative_rms=0
+layer=21 residual max_abs=0 rms=0 relative_rms=0
+layer=22 residual max_abs=0 rms=0 relative_rms=0
+layer=23 residual max_abs=0 rms=0 relative_rms=0
+layer=24 residual max_abs=0 rms=0 relative_rms=0
+layer=25 residual max_abs=0 rms=0 relative_rms=0
+layer=26 residual max_abs=0 rms=0 relative_rms=0
+layer=27 residual max_abs=0 rms=0 relative_rms=0
+layer=28 residual max_abs=0 rms=0 relative_rms=0
+layer=29 residual max_abs=0 rms=0 relative_rms=0
+layer=30 residual max_abs=0 rms=0 relative_rms=0
+layer=31 residual max_abs=0 rms=0 relative_rms=0
+layer=32 residual max_abs=0 rms=0 relative_rms=0
+layer=33 residual max_abs=0 rms=0 relative_rms=0
+layer=34 residual max_abs=0 rms=0 relative_rms=0
+layer=35 residual max_abs=0 rms=0 relative_rms=0
+layer=36 residual max_abs=0 rms=0 relative_rms=0
+layer=37 residual max_abs=0 rms=0 relative_rms=0
+layer=38 residual max_abs=0 rms=0 relative_rms=0
+layer=39 residual max_abs=0 rms=0 relative_rms=0
+hidden max_abs=0 rms=0 relative_rms=0
+logits max_abs=0 rms=0 relative_rms=0
+distribution kl=0 top10_overlap=10/10
+top1=361/361
+token=31 id=361
+layer=0 residual max_abs=0 rms=0 relative_rms=0
+layer=1 residual max_abs=0 rms=0 relative_rms=0
+layer=2 residual max_abs=0 rms=0 relative_rms=0
+layer=3 residual max_abs=0 rms=0 relative_rms=0
+layer=4 residual max_abs=0 rms=0 relative_rms=0
+layer=5 residual max_abs=0 rms=0 relative_rms=0
+layer=6 residual max_abs=0 rms=0 relative_rms=0
+layer=7 residual max_abs=0 rms=0 relative_rms=0
+layer=8 residual max_abs=0 rms=0 relative_rms=0
+layer=9 residual max_abs=0 rms=0 relative_rms=0
+layer=10 residual max_abs=0 rms=0 relative_rms=0
+layer=11 residual max_abs=0 rms=0 relative_rms=0
+layer=12 residual max_abs=0 rms=0 relative_rms=0
+layer=13 residual max_abs=0 rms=0 relative_rms=0
+layer=14 residual max_abs=0 rms=0 relative_rms=0
+layer=15 residual max_abs=0 rms=0 relative_rms=0
+layer=16 residual max_abs=0 rms=0 relative_rms=0
+layer=17 residual max_abs=0 rms=0 relative_rms=0
+layer=18 residual max_abs=0 rms=0 relative_rms=0
+layer=19 residual max_abs=0 rms=0 relative_rms=0
+layer=20 residual max_abs=0 rms=0 relative_rms=0
+layer=21 residual max_abs=0 rms=0 relative_rms=0
+layer=22 residual max_abs=0 rms=0 relative_rms=0
+layer=23 residual max_abs=0 rms=0 relative_rms=0
+layer=24 residual max_abs=0 rms=0 relative_rms=0
+layer=25 residual max_abs=0 rms=0 relative_rms=0
+layer=26 residual max_abs=0 rms=0 relative_rms=0
+layer=27 residual max_abs=0 rms=0 relative_rms=0
+layer=28 residual max_abs=0 rms=0 relative_rms=0
+layer=29 residual max_abs=0 rms=0 relative_rms=0
+layer=30 residual max_abs=0 rms=0 relative_rms=0
+layer=31 residual max_abs=0 rms=0 relative_rms=0
+layer=32 residual max_abs=0 rms=0 relative_rms=0
+layer=33 residual max_abs=0 rms=0 relative_rms=0
+layer=34 residual max_abs=0 rms=0 relative_rms=0
+layer=35 residual max_abs=0 rms=0 relative_rms=0
+layer=36 residual max_abs=0 rms=0 relative_rms=0
+layer=37 residual max_abs=0 rms=0 relative_rms=0
+layer=38 residual max_abs=0 rms=0 relative_rms=0
+layer=39 residual max_abs=0 rms=0 relative_rms=0
+hidden max_abs=0 rms=0 relative_rms=0
+logits max_abs=0 rms=0 relative_rms=0
+distribution kl=0 top10_overlap=10/10
+top1=19086/19086
+token=32 id=19086
+layer=0 residual max_abs=0 rms=0 relative_rms=0
+layer=1 residual max_abs=0 rms=0 relative_rms=0
+layer=2 residual max_abs=0 rms=0 relative_rms=0
+layer=3 residual max_abs=0 rms=0 relative_rms=0
+layer=4 residual max_abs=0 rms=0 relative_rms=0
+layer=5 residual max_abs=0 rms=0 relative_rms=0
+layer=6 residual max_abs=0 rms=0 relative_rms=0
+layer=7 residual max_abs=0 rms=0 relative_rms=0
+layer=8 residual max_abs=0 rms=0 relative_rms=0
+layer=9 residual max_abs=0 rms=0 relative_rms=0
+layer=10 residual max_abs=0 rms=0 relative_rms=0
+layer=11 residual max_abs=0 rms=0 relative_rms=0
+layer=12 residual max_abs=0 rms=0 relative_rms=0
+layer=13 residual max_abs=0 rms=0 relative_rms=0
+layer=14 residual max_abs=0 rms=0 relative_rms=0
+layer=15 residual max_abs=0 rms=0 relative_rms=0
+layer=16 residual max_abs=0 rms=0 relative_rms=0
+layer=17 residual max_abs=0 rms=0 relative_rms=0
+layer=18 residual max_abs=0 rms=0 relative_rms=0
+layer=19 residual max_abs=0 rms=0 relative_rms=0
+layer=20 residual max_abs=0 rms=0 relative_rms=0
+layer=21 residual max_abs=0 rms=0 relative_rms=0
+layer=22 residual max_abs=0 rms=0 relative_rms=0
+layer=23 residual max_abs=0 rms=0 relative_rms=0
+layer=24 residual max_abs=0 rms=0 relative_rms=0
+layer=25 residual max_abs=0 rms=0 relative_rms=0
+layer=26 residual max_abs=0 rms=0 relative_rms=0
+layer=27 residual max_abs=0 rms=0 relative_rms=0
+layer=28 residual max_abs=0 rms=0 relative_rms=0
+layer=29 residual max_abs=0 rms=0 relative_rms=0
+layer=30 residual max_abs=0 rms=0 relative_rms=0
+layer=31 residual max_abs=0 rms=0 relative_rms=0
+layer=32 residual max_abs=0 rms=0 relative_rms=0
+layer=33 residual max_abs=0 rms=0 relative_rms=0
+layer=34 residual max_abs=0 rms=0 relative_rms=0
+layer=35 residual max_abs=0 rms=0 relative_rms=0
+layer=36 residual max_abs=0 rms=0 relative_rms=0
+layer=37 residual max_abs=0 rms=0 relative_rms=0
+layer=38 residual max_abs=0 rms=0 relative_rms=0
+layer=39 residual max_abs=0 rms=0 relative_rms=0
+hidden max_abs=0 rms=0 relative_rms=0
+logits max_abs=0 rms=0 relative_rms=0
+distribution kl=0 top10_overlap=10/10
+top1=29/29
+token=33 id=29
+layer=0 residual max_abs=0 rms=0 relative_rms=0
+layer=1 residual max_abs=0 rms=0 relative_rms=0
+layer=2 residual max_abs=0 rms=0 relative_rms=0
+layer=3 residual max_abs=0 rms=0 relative_rms=0
+layer=4 residual max_abs=0 rms=0 relative_rms=0
+layer=5 residual max_abs=0 rms=0 relative_rms=0
+layer=6 residual max_abs=0 rms=0 relative_rms=0
+layer=7 residual max_abs=0 rms=0 relative_rms=0
+layer=8 residual max_abs=0 rms=0 relative_rms=0
+layer=9 residual max_abs=0 rms=0 relative_rms=0
+layer=10 residual max_abs=0 rms=0 relative_rms=0
+layer=11 residual max_abs=0 rms=0 relative_rms=0
+layer=12 residual max_abs=0 rms=0 relative_rms=0
+layer=13 residual max_abs=0 rms=0 relative_rms=0
+layer=14 residual max_abs=0 rms=0 relative_rms=0
+layer=15 residual max_abs=0 rms=0 relative_rms=0
+layer=16 residual max_abs=0 rms=0 relative_rms=0
+layer=17 residual max_abs=0 rms=0 relative_rms=0
+layer=18 residual max_abs=0 rms=0 relative_rms=0
+layer=19 residual max_abs=0 rms=0 relative_rms=0
+layer=20 residual max_abs=0 rms=0 relative_rms=0
+layer=21 residual max_abs=0 rms=0 relative_rms=0
+layer=22 residual max_abs=0 rms=0 relative_rms=0
+layer=23 residual max_abs=0 rms=0 relative_rms=0
+layer=24 residual max_abs=0 rms=0 relative_rms=0
+layer=25 residual max_abs=0 rms=0 relative_rms=0
+layer=26 residual max_abs=0 rms=0 relative_rms=0
+layer=27 residual max_abs=0 rms=0 relative_rms=0
+layer=28 residual max_abs=0 rms=0 relative_rms=0
+layer=29 residual max_abs=0 rms=0 relative_rms=0
+layer=30 residual max_abs=0 rms=0 relative_rms=0
+layer=31 residual max_abs=0 rms=0 relative_rms=0
+layer=32 residual max_abs=0 rms=0 relative_rms=0
+layer=33 residual max_abs=0 rms=0 relative_rms=0
+layer=34 residual max_abs=0 rms=0 relative_rms=0
+layer=35 residual max_abs=0 rms=0 relative_rms=0
+layer=36 residual max_abs=0 rms=0 relative_rms=0
+layer=37 residual max_abs=0 rms=0 relative_rms=0
+layer=38 residual max_abs=0 rms=0 relative_rms=0
+layer=39 residual max_abs=0 rms=0 relative_rms=0
+hidden max_abs=0 rms=0 relative_rms=0
+logits max_abs=0 rms=0 relative_rms=0
+distribution kl=0 top10_overlap=10/10
+top1=198/198
+token=34 id=198
+layer=0 residual max_abs=0 rms=0 relative_rms=0
+layer=1 residual max_abs=0 rms=0 relative_rms=0
+layer=2 residual max_abs=0 rms=0 relative_rms=0
+layer=3 residual max_abs=0 rms=0 relative_rms=0
+layer=4 residual max_abs=0 rms=0 relative_rms=0
+layer=5 residual max_abs=0 rms=0 relative_rms=0
+layer=6 residual max_abs=0 rms=0 relative_rms=0
+layer=7 residual max_abs=0 rms=0 relative_rms=0
+layer=8 residual max_abs=0 rms=0 relative_rms=0
+layer=9 residual max_abs=0 rms=0 relative_rms=0
+layer=10 residual max_abs=0 rms=0 relative_rms=0
+layer=11 residual max_abs=0 rms=0 relative_rms=0
+layer=12 residual max_abs=0 rms=0 relative_rms=0
+layer=13 residual max_abs=0 rms=0 relative_rms=0
+layer=14 residual max_abs=0 rms=0 relative_rms=0
+layer=15 residual max_abs=0 rms=0 relative_rms=0
+layer=16 residual max_abs=0 rms=0 relative_rms=0
+layer=17 residual max_abs=0 rms=0 relative_rms=0
+layer=18 residual max_abs=0 rms=0 relative_rms=0
+layer=19 residual max_abs=0 rms=0 relative_rms=0
+layer=20 residual max_abs=0 rms=0 relative_rms=0
+layer=21 residual max_abs=0 rms=0 relative_rms=0
+layer=22 residual max_abs=0 rms=0 relative_rms=0
+layer=23 residual max_abs=0 rms=0 relative_rms=0
+layer=24 residual max_abs=0 rms=0 relative_rms=0
+layer=25 residual max_abs=0 rms=0 relative_rms=0
+layer=26 residual max_abs=0 rms=0 relative_rms=0
+layer=27 residual max_abs=0 rms=0 relative_rms=0
+layer=28 residual max_abs=0 rms=0 relative_rms=0
+layer=29 residual max_abs=0 rms=0 relative_rms=0
+layer=30 residual max_abs=0 rms=0 relative_rms=0
+layer=31 residual max_abs=0 rms=0 relative_rms=0
+layer=32 residual max_abs=0 rms=0 relative_rms=0
+layer=33 residual max_abs=0 rms=0 relative_rms=0
+layer=34 residual max_abs=0 rms=0 relative_rms=0
+layer=35 residual max_abs=0 rms=0 relative_rms=0
+layer=36 residual max_abs=0 rms=0 relative_rms=0
+layer=37 residual max_abs=0 rms=0 relative_rms=0
+layer=38 residual max_abs=0 rms=0 relative_rms=0
+layer=39 residual max_abs=0 rms=0 relative_rms=0
+hidden max_abs=0 rms=0 relative_rms=0
+logits max_abs=0 rms=0 relative_rms=0
+distribution kl=0 top10_overlap=10/10
+top1=1032/1032
+token=35 id=1032
+layer=0 residual max_abs=0 rms=0 relative_rms=0
+layer=1 residual max_abs=0 rms=0 relative_rms=0
+layer=2 residual max_abs=0 rms=0 relative_rms=0
+layer=3 residual max_abs=0 rms=0 relative_rms=0
+layer=4 residual max_abs=0 rms=0 relative_rms=0
+layer=5 residual max_abs=0 rms=0 relative_rms=0
+layer=6 residual max_abs=0 rms=0 relative_rms=0
+layer=7 residual max_abs=0 rms=0 relative_rms=0
+layer=8 residual max_abs=0 rms=0 relative_rms=0
+layer=9 residual max_abs=0 rms=0 relative_rms=0
+layer=10 residual max_abs=0 rms=0 relative_rms=0
+layer=11 residual max_abs=0 rms=0 relative_rms=0
+layer=12 residual max_abs=0 rms=0 relative_rms=0
+layer=13 residual max_abs=0 rms=0 relative_rms=0
+layer=14 residual max_abs=0 rms=0 relative_rms=0
+layer=15 residual max_abs=0 rms=0 relative_rms=0
+layer=16 residual max_abs=0 rms=0 relative_rms=0
+layer=17 residual max_abs=0 rms=0 relative_rms=0
+layer=18 residual max_abs=0 rms=0 relative_rms=0
+layer=19 residual max_abs=0 rms=0 relative_rms=0
+layer=20 residual max_abs=0 rms=0 relative_rms=0
+layer=21 residual max_abs=0 rms=0 relative_rms=0
+layer=22 residual max_abs=0 rms=0 relative_rms=0
+layer=23 residual max_abs=0 rms=0 relative_rms=0
+layer=24 residual max_abs=0 rms=0 relative_rms=0
+layer=25 residual max_abs=0 rms=0 relative_rms=0
+layer=26 residual max_abs=0 rms=0 relative_rms=0
+layer=27 residual max_abs=0 rms=0 relative_rms=0
+layer=28 residual max_abs=0 rms=0 relative_rms=0
+layer=29 residual max_abs=0 rms=0 relative_rms=0
+layer=30 residual max_abs=0 rms=0 relative_rms=0
+layer=31 residual max_abs=0 rms=0 relative_rms=0
+layer=32 residual max_abs=0 rms=0 relative_rms=0
+layer=33 residual max_abs=0 rms=0 relative_rms=0
+layer=34 residual max_abs=0 rms=0 relative_rms=0
+layer=35 residual max_abs=0 rms=0 relative_rms=0
+layer=36 residual max_abs=0 rms=0 relative_rms=0
+layer=37 residual max_abs=0 rms=0 relative_rms=0
+layer=38 residual max_abs=0 rms=0 relative_rms=0
+layer=39 residual max_abs=0 rms=0 relative_rms=0
+hidden max_abs=0 rms=0 relative_rms=0
+logits max_abs=0 rms=0 relative_rms=0
+distribution kl=0 top10_overlap=10/10
+top1=361/361
+token=36 id=361
+layer=0 residual max_abs=0 rms=0 relative_rms=0
+layer=1 residual max_abs=0 rms=0 relative_rms=0
+layer=2 residual max_abs=0 rms=0 relative_rms=0
+layer=3 residual max_abs=0 rms=0 relative_rms=0
+layer=4 residual max_abs=0 rms=0 relative_rms=0
+layer=5 residual max_abs=0 rms=0 relative_rms=0
+layer=6 residual max_abs=0 rms=0 relative_rms=0
+layer=7 residual max_abs=0 rms=0 relative_rms=0
+layer=8 residual max_abs=0 rms=0 relative_rms=0
+layer=9 residual max_abs=0 rms=0 relative_rms=0
+layer=10 residual max_abs=0 rms=0 relative_rms=0
+layer=11 residual max_abs=0 rms=0 relative_rms=0
+layer=12 residual max_abs=0 rms=0 relative_rms=0
+layer=13 residual max_abs=0 rms=0 relative_rms=0
+layer=14 residual max_abs=0 rms=0 relative_rms=0
+layer=15 residual max_abs=0 rms=0 relative_rms=0
+layer=16 residual max_abs=0 rms=0 relative_rms=0
+layer=17 residual max_abs=0 rms=0 relative_rms=0
+layer=18 residual max_abs=0 rms=0 relative_rms=0
+layer=19 residual max_abs=0 rms=0 relative_rms=0
+layer=20 residual max_abs=0 rms=0 relative_rms=0
+layer=21 residual max_abs=0 rms=0 relative_rms=0
+layer=22 residual max_abs=0 rms=0 relative_rms=0
+layer=23 residual max_abs=0 rms=0 relative_rms=0
+layer=24 residual max_abs=0 rms=0 relative_rms=0
+layer=25 residual max_abs=0 rms=0 relative_rms=0
+layer=26 residual max_abs=0 rms=0 relative_rms=0
+layer=27 residual max_abs=0 rms=0 relative_rms=0
+layer=28 residual max_abs=0 rms=0 relative_rms=0
+layer=29 residual max_abs=0 rms=0 relative_rms=0
+layer=30 residual max_abs=0 rms=0 relative_rms=0
+layer=31 residual max_abs=0 rms=0 relative_rms=0
+layer=32 residual max_abs=0 rms=0 relative_rms=0
+layer=33 residual max_abs=0 rms=0 relative_rms=0
+layer=34 residual max_abs=0 rms=0 relative_rms=0
+layer=35 residual max_abs=0 rms=0 relative_rms=0
+layer=36 residual max_abs=0 rms=0 relative_rms=0
+layer=37 residual max_abs=0 rms=0 relative_rms=0
+layer=38 residual max_abs=0 rms=0 relative_rms=0
+layer=39 residual max_abs=0 rms=0 relative_rms=0
+hidden max_abs=0 rms=0 relative_rms=0
+logits max_abs=0 rms=0 relative_rms=0
+distribution kl=0 top10_overlap=10/10
+top1=16759/16759
+token=37 id=16759
+layer=0 residual max_abs=0 rms=0 relative_rms=0
+layer=1 residual max_abs=0 rms=0 relative_rms=0
+layer=2 residual max_abs=0 rms=0 relative_rms=0
+layer=3 residual max_abs=0 rms=0 relative_rms=0
+layer=4 residual max_abs=0 rms=0 relative_rms=0
+layer=5 residual max_abs=0 rms=0 relative_rms=0
+layer=6 residual max_abs=0 rms=0 relative_rms=0
+layer=7 residual max_abs=0 rms=0 relative_rms=0
+layer=8 residual max_abs=0 rms=0 relative_rms=0
+layer=9 residual max_abs=0 rms=0 relative_rms=0
+layer=10 residual max_abs=0 rms=0 relative_rms=0
+layer=11 residual max_abs=0 rms=0 relative_rms=0
+layer=12 residual max_abs=0 rms=0 relative_rms=0
+layer=13 residual max_abs=0 rms=0 relative_rms=0
+layer=14 residual max_abs=0 rms=0 relative_rms=0
+layer=15 residual max_abs=0 rms=0 relative_rms=0
+layer=16 residual max_abs=0 rms=0 relative_rms=0
+layer=17 residual max_abs=0 rms=0 relative_rms=0
+layer=18 residual max_abs=0 rms=0 relative_rms=0
+layer=19 residual max_abs=0 rms=0 relative_rms=0
+layer=20 residual max_abs=0 rms=0 relative_rms=0
+layer=21 residual max_abs=0 rms=0 relative_rms=0
+layer=22 residual max_abs=0 rms=0 relative_rms=0
+layer=23 residual max_abs=0 rms=0 relative_rms=0
+layer=24 residual max_abs=0 rms=0 relative_rms=0
+layer=25 residual max_abs=0 rms=0 relative_rms=0
+layer=26 residual max_abs=0 rms=0 relative_rms=0
+layer=27 residual max_abs=0 rms=0 relative_rms=0
+layer=28 residual max_abs=0 rms=0 relative_rms=0
+layer=29 residual max_abs=0 rms=0 relative_rms=0
+layer=30 residual max_abs=0 rms=0 relative_rms=0
+layer=31 residual max_abs=0 rms=0 relative_rms=0
+layer=32 residual max_abs=0 rms=0 relative_rms=0
+layer=33 residual max_abs=0 rms=0 relative_rms=0
+layer=34 residual max_abs=0 rms=0 relative_rms=0
+layer=35 residual max_abs=0 rms=0 relative_rms=0
+layer=36 residual max_abs=0 rms=0 relative_rms=0
+layer=37 residual max_abs=0 rms=0 relative_rms=0
+layer=38 residual max_abs=0 rms=0 relative_rms=0
+layer=39 residual max_abs=0 rms=0 relative_rms=0
+hidden max_abs=0 rms=0 relative_rms=0
+logits max_abs=0 rms=0 relative_rms=0
+distribution kl=0 top10_overlap=10/10
+top1=29/29
+token=38 id=29
+layer=0 residual max_abs=0 rms=0 relative_rms=0
+layer=1 residual max_abs=0 rms=0 relative_rms=0
+layer=2 residual max_abs=0 rms=0 relative_rms=0
+layer=3 residual max_abs=0 rms=0 relative_rms=0
+layer=4 residual max_abs=0 rms=0 relative_rms=0
+layer=5 residual max_abs=0 rms=0 relative_rms=0
+layer=6 residual max_abs=0 rms=0 relative_rms=0
+layer=7 residual max_abs=0 rms=0 relative_rms=0
+layer=8 residual max_abs=0 rms=0 relative_rms=0
+layer=9 residual max_abs=0 rms=0 relative_rms=0
+layer=10 residual max_abs=0 rms=0 relative_rms=0
+layer=11 residual max_abs=0 rms=0 relative_rms=0
+layer=12 residual max_abs=0 rms=0 relative_rms=0
+layer=13 residual max_abs=0 rms=0 relative_rms=0
+layer=14 residual max_abs=0 rms=0 relative_rms=0
+layer=15 residual max_abs=0 rms=0 relative_rms=0
+layer=16 residual max_abs=0 rms=0 relative_rms=0
+layer=17 residual max_abs=0 rms=0 relative_rms=0
+layer=18 residual max_abs=0 rms=0 relative_rms=0
+layer=19 residual max_abs=0 rms=0 relative_rms=0
+layer=20 residual max_abs=0 rms=0 relative_rms=0
+layer=21 residual max_abs=0 rms=0 relative_rms=0
+layer=22 residual max_abs=0 rms=0 relative_rms=0
+layer=23 residual max_abs=0 rms=0 relative_rms=0
+layer=24 residual max_abs=0 rms=0 relative_rms=0
+layer=25 residual max_abs=0 rms=0 relative_rms=0
+layer=26 residual max_abs=0 rms=0 relative_rms=0
+layer=27 residual max_abs=0 rms=0 relative_rms=0
+layer=28 residual max_abs=0 rms=0 relative_rms=0
+layer=29 residual max_abs=0 rms=0 relative_rms=0
+layer=30 residual max_abs=0 rms=0 relative_rms=0
+layer=31 residual max_abs=0 rms=0 relative_rms=0
+layer=32 residual max_abs=0 rms=0 relative_rms=0
+layer=33 residual max_abs=0 rms=0 relative_rms=0
+layer=34 residual max_abs=0 rms=0 relative_rms=0
+layer=35 residual max_abs=0 rms=0 relative_rms=0
+layer=36 residual max_abs=0 rms=0 relative_rms=0
+layer=37 residual max_abs=0 rms=0 relative_rms=0
+layer=38 residual max_abs=0 rms=0 relative_rms=0
+layer=39 residual max_abs=0 rms=0 relative_rms=0
+hidden max_abs=0 rms=0 relative_rms=0
+logits max_abs=0 rms=0 relative_rms=0
+distribution kl=0 top10_overlap=10/10
+top1=271/271
+token=39 id=271
+layer=0 residual max_abs=0 rms=0 relative_rms=0
+layer=1 residual max_abs=0 rms=0 relative_rms=0
+layer=2 residual max_abs=0 rms=0 relative_rms=0
+layer=3 residual max_abs=0 rms=0 relative_rms=0
+layer=4 residual max_abs=0 rms=0 relative_rms=0
+layer=5 residual max_abs=0 rms=0 relative_rms=0
+layer=6 residual max_abs=0 rms=0 relative_rms=0
+layer=7 residual max_abs=0 rms=0 relative_rms=0
+layer=8 residual max_abs=0 rms=0 relative_rms=0
+layer=9 residual max_abs=0 rms=0 relative_rms=0
+layer=10 residual max_abs=0 rms=0 relative_rms=0
+layer=11 residual max_abs=0 rms=0 relative_rms=0
+layer=12 residual max_abs=0 rms=0 relative_rms=0
+layer=13 residual max_abs=0 rms=0 relative_rms=0
+layer=14 residual max_abs=0 rms=0 relative_rms=0
+layer=15 residual max_abs=0 rms=0 relative_rms=0
+layer=16 residual max_abs=0 rms=0 relative_rms=0
+layer=17 residual max_abs=0 rms=0 relative_rms=0
+layer=18 residual max_abs=0 rms=0 relative_rms=0
+layer=19 residual max_abs=0 rms=0 relative_rms=0
+layer=20 residual max_abs=0 rms=0 relative_rms=0
+layer=21 residual max_abs=0 rms=0 relative_rms=0
+layer=22 residual max_abs=0 rms=0 relative_rms=0
+layer=23 residual max_abs=0 rms=0 relative_rms=0
+layer=24 residual max_abs=0 rms=0 relative_rms=0
+layer=25 residual max_abs=0 rms=0 relative_rms=0
+layer=26 residual max_abs=0 rms=0 relative_rms=0
+layer=27 residual max_abs=0 rms=0 relative_rms=0
+layer=28 residual max_abs=0 rms=0 relative_rms=0
+layer=29 residual max_abs=0 rms=0 relative_rms=0
+layer=30 residual max_abs=0 rms=0 relative_rms=0
+layer=31 residual max_abs=0 rms=0 relative_rms=0
+layer=32 residual max_abs=0 rms=0 relative_rms=0
+layer=33 residual max_abs=0 rms=0 relative_rms=0
+layer=34 residual max_abs=0 rms=0 relative_rms=0
+layer=35 residual max_abs=0 rms=0 relative_rms=0
+layer=36 residual max_abs=0 rms=0 relative_rms=0
+layer=37 residual max_abs=0 rms=0 relative_rms=0
+layer=38 residual max_abs=0 rms=0 relative_rms=0
+layer=39 residual max_abs=0 rms=0 relative_rms=0
+hidden max_abs=0 rms=0 relative_rms=0
+logits max_abs=0 rms=0 relative_rms=0
+distribution kl=0 top10_overlap=10/10
+top1=1005/1005
+qwen35 GPU totals: hits=0 misses=12800 CPU=663.120 ms GPU-wait=13.111 ms
+qwen35 transfers: activation D2H=13158400 parts H2D=104857600 cache H2D=0 bytes
+HIP budget: device 0 tracked peak 2242838528 bytes
+GPU model parity: PASS

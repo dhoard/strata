@@ -1,0 +1,91 @@
+{
+  "models": {
+    "object": "list",
+    "data": [
+      {
+        "id": "ornith-1.5-35b-a3b-ad-q4-iq4",
+        "object": "model",
+        "status": {
+          "value": "loaded"
+        },
+        "meta": {
+          "n_ctx": 131072
+        },
+        "architecture": {
+          "input_modalities": [
+            "text"
+          ],
+          "output_modalities": [
+            "text"
+          ]
+        }
+      }
+    ]
+  },
+  "chat_wall_seconds": 1.2603418219950981,
+  "chat": {
+    "id": "chatcmpl-d7d5fc003812424098c02a50",
+    "object": "chat.completion",
+    "created": 1790998941,
+    "model": "ornith-1.5-35b-a3b-ad-q4-iq4",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "```python\ndef add(a, b):\n    return a + b\n```"
+        },
+        "finish_reason": "length"
+      }
+    ],
+    "usage": {
+      "prompt_tokens": 31,
+      "completion_tokens": 17,
+      "total_tokens": 48,
+      "prompt_tokens_details": {
+        "cached_tokens": 0
+      }
+    },
+    "timings": {
+      "cache_n": 0,
+      "prompt_n": 31,
+      "prompt_ms": 905.1,
+      "prompt_per_token_ms": 29.198,
+      "prompt_per_second": 34.2,
+      "predicted_n": 17,
+      "predicted_ms": 352.6,
+      "predicted_per_token_ms": 20.738,
+      "predicted_per_second": 48.2,
+      "draft_n": 0,
+      "draft_n_accepted": 0
+    }
+  },
+  "identical_repeats": true,
+  "stream_chunks": 17,
+  "cancelled_stream": true,
+  "cancel_recovery_identical": true,
+  "image_rejection": {
+    "status": 400,
+    "body": "{\"error\": {\"type\": \"invalid_request_error\", \"message\": \"this server was started without the vision encoder (run setup again and choose 'vision'), so it cannot read images\"}}"
+  },
+  "anthropic": {
+    "id": "msg_1b7ce963af6f4500b5370d37",
+    "type": "message",
+    "role": "assistant",
+    "model": "ornith-1.5-35b-a3b-ad-q4-iq4",
+    "content": [
+      {
+        "type": "thinking",
+        "thinking": "The user is asking me to say hello. This is a simple, friendly greeting",
+        "signature": ""
+      }
+    ],
+    "stop_reason": "max_tokens",
+    "stop_sequence": null,
+    "usage": {
+      "input_tokens": 13,
+      "output_tokens": 16,
+      "cache_read_input_tokens": 0
+    }
+  }
+}

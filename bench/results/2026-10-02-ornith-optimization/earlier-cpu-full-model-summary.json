@@ -1,0 +1,24 @@
+[
+  {
+    "case": "code-512",
+    "prompt_tokens": 512,
+    "greedy_steps": 32,
+    "threads": 12,
+    "returncode": 0,
+    "elapsed_seconds": 128.38696601201082,
+    "compared_steps": 544,
+    "max_relative_rms": 0.0,
+    "max_abs": 0.0
+  },
+  {
+    "case": "code-4096",
+    "prompt_tokens": 4096,
+    "greedy_steps": 32,
+    "threads": 12,
+    "returncode": 0,
+    "elapsed_seconds": 1967.2616028669872,
+    "compared_steps": 4128,
+    "max_relative_rms": 0.0,
+    "max_abs": 0.0
+  }
+]

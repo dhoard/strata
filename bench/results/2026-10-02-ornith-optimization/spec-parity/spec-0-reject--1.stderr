@@ -1,0 +1,9 @@
+strata-qwen35: 40 layers, 2048 wide, 256 experts top-8, context 512, trained MTP loaded spec 0
+qwen35 backend=gpu (dense+attention on card, experts split VRAM/CPU) kv=f16 expert_cache=n pool_workers=auto context=512
+HIP budget: 10240 MiB ceiling, 1024 MiB runtime reserve, 256 MiB slack; explicit allocations capped at 8960 MiB
+qwen35 resident GPU: KV=f16 slots=256 workers=12 dense/state ready; CPU expert backing 16.250 GiB
+qwen35 GPU plan: dense=1.980 GiB gdn=0.061 GiB kv=0.010 GiB scratch=0.010 GiB; planned 2.468 GiB, allocated 2.468 GiB
+qwen35 timing: prefill=197.454 ms decode=882.920 ms generated=32 tok/s=36.243 accepted=0/0 draft=0.000 ms verify=0.000 ms
+qwen35 GPU totals: hits=835 misses=11965 CPU=464.323 ms GPU-wait=331.890 ms
+qwen35 transfers: activation D2H=13158400 parts H2D=98017280 cache H2D=436207616 bytes
+HIP budget: device 0 tracked peak 2668560384 bytes

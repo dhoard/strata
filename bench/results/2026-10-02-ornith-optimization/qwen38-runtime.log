@@ -1,0 +1,53 @@
+strata-hip: GPU (HIP index 0):
+  GPU 0: AMD Radeon (gfx1101)  gfx1101  12.0 GiB  /dev/dri/renderD128
+  HIP budget: 10240 MiB ceiling, 1024 MiB runtime reserve, 256 MiB slack; explicit allocations capped at 8960 MiB
+  device 0: AMD Radeon RX 7700 XT
+    HIP arch            gfx1101 wave32 (compiled for gfx1101)
+    multiprocessors     27
+    VRAM total / free   11.984 GiB (12868124672 B) / 8.750 GiB (9395240960 B)
+strata-hip: VRAM: 10240 MiB ceiling; desktop/GUI currently holds 420 MiB
+strata-hip:   allocator preserves runtime reserve and 256 MiB slack
+strata-hip:   expert-cache sizing reserves 768 MiB for later explicit allocations
+strata-hip: checking the model and its pack ...
+  HF cache: /hf-cache
+  IQ3_XXS  ISTA-DASLab/Qwen3.8-Flash-Next-GSQ-RCO-GGUF                both shards   (75.8 GB download)
+  IQ3_S    ISTA-DASLab/Qwen3.8-Flash-Next-GSQ-RCO-GGUF                both shards   (83.6 GB download)
+  Q2_0     ISTA-DASLab/Qwen3.8-Flash-Next-GSQ-RCO-GGUF                repo in cache, files missing   (66.4 GB download)
+  IQ2_XS   ISTA-DASLab/Qwen3.8-Flash-Next-GSQ-RCO-GGUF                repo in cache, files missing   (68.0 GB download)
+  IQ1_M    ISTA-DASLab/Qwen3.8-Flash-Next-GSQ-RCO-Coder-GGUF          not in cache   (58.4 GB download)
+  ornith   AtomicChat/Ornith-1.5-35B-A3B-GGUF                         model file + MTP   (20.1 GB download)
+    Other repos in this cache (Strata cannot run them - it needs one of the releases above):
+      models--EryriLabs--Ornith-1.5-35B-A3B-BigBang-MTP-GGUF
+bootstrap: model IQ3_XXS (repo ISTA-DASLab/Qwen3.8-Flash-Next-GSQ-RCO-GGUF), HF cache /hf-cache: cached
+bootstrap: shard 1 (experts):   /hf-cache/models--ISTA-DASLab--Qwen3.8-Flash-Next-GSQ-RCO-GGUF/snapshots/ed59f92082b1e93c0e96d60a8b11aab089b52f09/IQ3_XXS/Qwen3.8-Flash-Next-GSQ-RCO-IQ3_XXS-00001-of-00002.gguf
+bootstrap: shard 2 (PLE table): /hf-cache/models--ISTA-DASLab--Qwen3.8-Flash-Next-GSQ-RCO-GGUF/snapshots/ed59f92082b1e93c0e96d60a8b11aab089b52f09/IQ3_XXS/Qwen3.8-Flash-Next-GSQ-RCO-IQ3_XXS-00002-of-00002.gguf
+bootstrap: pack: /work/packs/iq3_xxs
+bootstrap: MTP draft layer: /work/mtp/rt
+bootstrap: ready
+strata-hip: model IQ3_XXS from ISTA-DASLab/Qwen3.8-Flash-Next-GSQ-RCO-GGUF
+strata-hip:   native=/hf-cache/models--ISTA-DASLab--Qwen3.8-Flash-Next-GSQ-RCO-GGUF/snapshots/ed59f92082b1e93c0e96d60a8b11aab089b52f09/IQ3_XXS/Qwen3.8-Flash-Next-GSQ-RCO-IQ3_XXS-00001-of-00002.gguf
+strata-hip:   ple=/hf-cache/models--ISTA-DASLab--Qwen3.8-Flash-Next-GSQ-RCO-GGUF/snapshots/ed59f92082b1e93c0e96d60a8b11aab089b52f09/IQ3_XXS/Qwen3.8-Flash-Next-GSQ-RCO-IQ3_XXS-00002-of-00002.gguf
+strata-hip:   pack=/work/packs/iq3_xxs  mtp=/work/mtp/rt  profile=/opt/strata/data/expert-profile.bin
+strata-hip: wrote /run/strata-hip.json
+            --pack /work/packs/iq3_xxs --native /hf-cache/models--ISTA-DASLab--Qwen3.8-Flash-Next-GSQ-RCO-GGUF/snapshots/ed59f92082b1e93c0e96d60a8b11aab089b52f09/IQ3_XXS/Qwen3.8-Flash-Next-GSQ-RCO-IQ3_XXS-00001-of-00002.gguf --ple-gguf /hf-cache/models--ISTA-DASLab--Qwen3.8-Flash-Next-GSQ-RCO-GGUF/snapshots/ed59f92082b1e93c0e96d60a8b11aab089b52f09/IQ3_XXS/Qwen3.8-Flash-Next-GSQ-RCO-IQ3_XXS-00002-of-00002.gguf --mmap-experts --expert-profile /opt/strata/data/expert-profile.bin --expert-cache 800 --vram-reserve-mib 768 --prefill 2048 --mtp /work/mtp/rt --spec 4 --spec-min-p 0.5 --max-context 131072 --kv int8 --pool-workers 0 --adapt-every 0 --pcie-frac 0
+strata-hip: starting the server on 0.0.0.0:9932 - first start maps tens of GB into RAM, so the PC can be unresponsive for 1-3 minutes (normal; docs/DOCKER_GFX1101_PLAN.md P6)
+loading the model (the first start takes a minute or two) ...
+[strata] starting the engine: reading the model's weights ...
+[strata] loading the experts into RAM (about 47 GB) and locking part of them for the GPU.
+         YOUR PC CAN BE SLOW OR STOP RESPONDING FOR 1-3 MINUTES NOW - this is normal.
+         Please wait and don't close this window; the browser opens when it is ready.
+[strata] filling the GPU's expert cache (971 experts, 1.60 GiB of VRAM) ...
+ready: http://127.0.0.1:9932/v1  (OpenAI: /v1/chat/completions, Anthropic: /v1/messages, context 131072 tokens)
+       open http://127.0.0.1:9932/ in a browser to chat; close this window to stop the model
+       from other devices: http://172.16.0.3:9932/   (API: http://172.16.0.3:9932/v1)
+       WARNING: no API key - anyone on your network can use this model. Add "api_key": "..." to the config (clients send it as their API key; the web page asks for it)
+[strata] reading the prompt: 15 tokens, 10 s so far
+[strata] reading the prompt: 15 tokens, 20 s so far
+[strata] reading the prompt: 15 tokens, 30 s so far
+[strata] reading the prompt: 15 tokens, 40 s so far
+[strata] reading the prompt: 8 of 15 tokens, 51 s so far
+[strata] answering: 1 of max 8 tokens, 279620.3 tok/s, 53 s
+[strata] answering: 2 of max 8 tokens, 0.2 tok/s, 61 s
+[strata] answering: 3 of max 8 tokens, 0.2 tok/s, 71 s
+[strata] answering: 8 of max 8 tokens, 0.3 tok/s, 79 s
+[strata] done: 8 tokens in 79 s (0.3 tok/s) (length, cancel=False), expert cache 7.8% hit

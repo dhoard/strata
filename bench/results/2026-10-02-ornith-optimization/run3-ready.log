@@ -1,0 +1,9 @@
+[1;36m==>[0m GPU: gfx1101 (/dev/dri/renderD128), 12272 MiB VRAM; 10240 MiB Strata ceiling
+    allocation guard preserves runtime overhead and slack; cache reserves 768 MiB for later buffers
+[1;36m==>[0m image: strata-hip:gfx1101-latest   container: strata-ornith-gfx1101
+    hint: export HF_HUB_CACHE=/home/dhoard/Development/models  makes 'hf' and this script share one cache
+[1;36m==>[0m HF cache:  /mnt/storage/Development/models  (mounted read-write: a first run may download into it)
+[1;36m==>[0m work dir:  /mnt/storage/Development/strata-work  packs=/mnt/storage/Development/strata-work/packs/ornith-ad-q4-iq4-xs  mtp=/mnt/storage/Development/strata-work/mtp/ornith-qwen36  logs=/mnt/storage/Development/strata-work/logs/ornith
+    ornith is cached
+[1;36m==>[0m asking http://127.0.0.1:9931/v1/models ...
+    ornith-1.5-35b-a3b-ad-q4-iq4  loaded  ctx=131072

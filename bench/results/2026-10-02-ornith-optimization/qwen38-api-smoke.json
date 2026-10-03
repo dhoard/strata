@@ -1,0 +1,62 @@
+{
+  "models": {
+    "object": "list",
+    "data": [
+      {
+        "id": "qwen3.8-flash-next-iq3_xxs",
+        "object": "model",
+        "status": {
+          "value": "loaded"
+        },
+        "meta": {
+          "n_ctx": 131072
+        },
+        "architecture": {
+          "input_modalities": [
+            "text"
+          ],
+          "output_modalities": [
+            "text"
+          ]
+        }
+      }
+    ]
+  },
+  "response": {
+    "id": "chatcmpl-dc0c4730bb064300b23b9d62",
+    "object": "chat.completion",
+    "created": 1790998312,
+    "model": "qwen3.8-flash-next-iq3_xxs",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "Hello! How can I help you today"
+        },
+        "finish_reason": "length"
+      }
+    ],
+    "usage": {
+      "prompt_tokens": 15,
+      "completion_tokens": 8,
+      "total_tokens": 23,
+      "prompt_tokens_details": {
+        "cached_tokens": 0
+      }
+    },
+    "timings": {
+      "cache_n": 0,
+      "prompt_n": 15,
+      "prompt_ms": 51092.6,
+      "prompt_per_token_ms": 3406.173,
+      "prompt_per_second": 0.3,
+      "predicted_n": 8,
+      "predicted_ms": 28270.4,
+      "predicted_per_token_ms": 3533.8,
+      "predicted_per_second": 0.3,
+      "draft_n": 9,
+      "draft_n_accepted": 7
+    }
+  }
+}

@@ -1,0 +1,176 @@
+Internal ctest changing into directory: /src/build-hip
+Test project /src/build-hip
+      Start  1: gguf_reader_test
+ 1/76 Test  #1: gguf_reader_test ..........................   Passed    0.00 sec
+      Start  2: gguf_split_test
+ 2/76 Test  #2: gguf_split_test ...........................   Passed    0.00 sec
+      Start  3: qwen35_layout_test
+ 3/76 Test  #3: qwen35_layout_test ........................   Passed    0.00 sec
+      Start  4: qwen35_gdn_test
+ 4/76 Test  #4: qwen35_gdn_test ...........................   Passed    0.00 sec
+      Start  5: qwen35_layers_test
+ 5/76 Test  #5: qwen35_layers_test ........................   Passed    0.01 sec
+      Start  6: hip_device_budget
+ 6/76 Test  #6: hip_device_budget .........................   Passed    0.04 sec
+      Start  7: qsa_select_bench
+ 7/76 Test  #7: qsa_select_bench ..........................   Passed    0.53 sec
+      Start  8: file_expert_source_test
+ 8/76 Test  #8: file_expert_source_test ...................   Passed    0.02 sec
+      Start  9: expert_layout_test
+ 9/76 Test  #9: expert_layout_test ........................   Passed    0.11 sec
+      Start 10: native_dense_ple_key_test
+10/76 Test #10: native_dense_ple_key_test .................   Passed    0.07 sec
+      Start 11: expert_cache_per_layer_test
+11/76 Test #11: expert_cache_per_layer_test ...............   Passed    0.07 sec
+      Start 12: hip_expert_cache_staging
+12/76 Test #12: hip_expert_cache_staging ..................   Passed    0.08 sec
+      Start 13: hip_intrinsics
+13/76 Test #13: hip_intrinsics ............................   Passed    0.07 sec
+      Start 14: hip_handoff
+14/76 Test #14: hip_handoff ...............................   Passed    0.10 sec
+      Start 15: hip_mapped_alias
+15/76 Test #15: hip_mapped_alias ..........................   Passed    0.07 sec
+      Start 16: hip_native_qsa_score
+16/76 Test #16: hip_native_qsa_score ......................   Passed    0.07 sec
+      Start 17: hip_prefill_native_batch
+17/76 Test #17: hip_prefill_native_batch ..................   Passed    0.20 sec
+      Start 18: hip_router_fast
+18/76 Test #18: hip_router_fast ...........................   Passed    0.72 sec
+      Start 19: hip_prompt_attn_wmma
+19/76 Test #19: hip_prompt_attn_wmma ......................***Skipped   0.05 sec
+      Start 20: hip_prefill_hipblaslt_gemm
+20/76 Test #20: hip_prefill_hipblaslt_gemm ................***Skipped   0.03 sec
+      Start 21: dequant_s2_parity
+21/76 Test #21: dequant_s2_parity .........................   Passed    0.14 sec
+      Start 22: s2_gemv_parity
+22/76 Test #22: s2_gemv_parity ............................   Passed    0.08 sec
+      Start 23: iq_multi_parity
+23/76 Test #23: iq_multi_parity ...........................   Passed    1.11 sec
+      Start 24: shared_expert_parity
+24/76 Test #24: shared_expert_parity ......................   Passed    0.08 sec
+      Start 25: gr_parity
+25/76 Test #25: gr_parity .................................   Passed    0.17 sec
+      Start 26: gdn_parity
+26/76 Test #26: gdn_parity ................................   Passed    0.20 sec
+      Start 27: s2_gemv_q8_parity
+27/76 Test #27: s2_gemv_q8_parity .........................   Passed    0.08 sec
+      Start 28: sampler_parity
+28/76 Test #28: sampler_parity ............................   Passed    2.21 sec
+      Start 29: sampler_parity_one_block
+29/76 Test #29: sampler_parity_one_block ..................   Passed    2.85 sec
+      Start 30: sampler_parity_old
+30/76 Test #30: sampler_parity_old ........................   Passed    6.50 sec
+      Start 31: rope_parity
+31/76 Test #31: rope_parity ...............................   Passed    0.09 sec
+      Start 32: quantize_act_parity
+32/76 Test #32: quantize_act_parity .......................   Passed    0.12 sec
+      Start 33: router_top10_parity
+33/76 Test #33: router_top10_parity .......................   Passed    0.07 sec
+      Start 34: s_gemv_parity
+34/76 Test #34: s_gemv_parity .............................   Passed    0.09 sec
+      Start 35: elementwise_parity
+35/76 Test #35: elementwise_parity ........................   Passed    0.08 sec
+      Start 36: bf16_gemv_parity
+36/76 Test #36: bf16_gemv_parity ..........................   Passed    0.16 sec
+      Start 37: s_gemv_q8k_parity
+37/76 Test #37: s_gemv_q8k_parity .........................   Passed    0.08 sec
+      Start 38: qsa_parity
+38/76 Test #38: qsa_parity ................................   Passed    0.63 sec
+      Start 39: ple_parity
+39/76 Test #39: ple_parity ................................***Failed    0.01 sec
+ple_parity: required PLE table is missing or incompatible: ../../Q2_0/Qwen3.8-Flash-Next-GSQ-RCO-Q2_0-00002-of-00002.gguf (cannot open ../../Q2_0/Qwen3.8-Flash-Next-GSQ-RCO-Q2_0-00002-of-00002.gguf)
+
+      Start 40: kv_q8_parity
+40/76 Test #40: kv_q8_parity ..............................   Passed    0.13 sec
+      Start 41: kv_stream_parity
+41/76 Test #41: kv_stream_parity ..........................   Passed   10.45 sec
+      Start 42: kv_hybrid_parity
+42/76 Test #42: kv_hybrid_parity ..........................   Passed    0.27 sec
+      Start 43: kv_q4_parity
+43/76 Test #43: kv_q4_parity ..............................   Passed    0.13 sec
+      Start 44: cvec_parity
+44/76 Test #44: cvec_parity ...............................   Passed    0.16 sec
+      Start 45: s2_expert_grouped_parity
+45/76 Test #45: s2_expert_grouped_parity ..................   Passed    0.26 sec
+      Start 46: platform_memory_test
+46/76 Test #46: platform_memory_test ......................   Passed    0.17 sec
+      Start 47: pinned_shared_test
+47/76 Test #47: pinned_shared_test ........................   Passed    0.05 sec
+      Start 48: ple_reader_selftest
+48/76 Test #48: ple_reader_selftest .......................   Passed    6.96 sec
+      Start 49: hip_device_selftest
+49/76 Test #49: hip_device_selftest .......................   Passed    0.06 sec
+      Start 50: suffix_drafter_test
+50/76 Test #50: suffix_drafter_test .......................   Passed    0.06 sec
+      Start 51: controller_test
+51/76 Test #51: controller_test ...........................   Passed    0.00 sec
+      Start 52: draft_policy_test
+52/76 Test #52: draft_policy_test .........................   Passed    0.00 sec
+      Start 53: conv_cache_test
+53/76 Test #53: conv_cache_test ...........................   Passed    0.00 sec
+      Start 54: coupled_draft_test
+54/76 Test #54: coupled_draft_test ........................   Passed    0.00 sec
+      Start 55: bf16_bits_test
+55/76 Test #55: bf16_bits_test ............................   Passed    0.81 sec
+      Start 56: device_budget_test
+56/76 Test #56: device_budget_test ........................   Passed    0.00 sec
+      Start 57: hip_prefill_mmq_parity
+57/76 Test #57: hip_prefill_mmq_parity ....................   Passed    0.43 sec
+      Start 58: qwen35_pool_geometry_test
+58/76 Test #58: qwen35_pool_geometry_test .................   Passed    3.36 sec
+      Start 59: qwen35_attention_memory_test
+59/76 Test #59: qwen35_attention_memory_test ..............   Passed    1.07 sec
+      Start 60: qwen35_batch_session_test
+60/76 Test #60: qwen35_batch_session_test .................***Skipped   0.01 sec
+      Start 61: qwen35_gpu_batch_test
+61/76 Test #61: qwen35_gpu_batch_test .....................   Passed    0.09 sec
+      Start 62: native_expert_parity_q4_K_q5_1
+62/76 Test #62: native_expert_parity_q4_K_q5_1 ............   Passed    0.32 sec
+      Start 63: native_expert_parity_q4_K_q8_0
+63/76 Test #63: native_expert_parity_q4_K_q8_0 ............   Passed    0.31 sec
+      Start 64: native_expert_parity_q5_K_q8_0
+64/76 Test #64: native_expert_parity_q5_K_q8_0 ............   Passed    0.28 sec
+      Start 65: native_expert_parity_q8_0_q8_0
+65/76 Test #65: native_expert_parity_q8_0_q8_0 ............   Passed    0.18 sec
+      Start 66: native_expert_parity_q5_1_min
+66/76 Test #66: native_expert_parity_q5_1_min .............   Passed    0.07 sec
+      Start 67: native_expert_parity_bf16_embd
+67/76 Test #67: native_expert_parity_bf16_embd ............   Passed    0.08 sec
+      Start 68: native_expert_parity_refuses_q6_K
+68/76 Test #68: native_expert_parity_refuses_q6_K .........   Passed    0.06 sec
+      Start 69: native_expert_parity_ornith_iq4_xs_q4_K
+69/76 Test #69: native_expert_parity_ornith_iq4_xs_q4_K ...   Passed    0.44 sec
+      Start 70: expert_multi_test
+70/76 Test #70: expert_multi_test .........................   Passed    0.03 sec
+      Start 71: expert_parity
+71/76 Test #71: expert_parity .............................***Failed    0.00 sec
+cannot read expert 0 (layer 0) from pack/full/experts.bin
+  AVX512 F/BW/VL/VNNI/VBMI                     all present
+
+      Start 72: pool_test
+72/76 Test #72: pool_test .................................***Failed    0.00 sec
+cannot read expert 0 of layer 0 from pack/full/experts.bin
+
+      Start 73: pool_quant_test
+73/76 Test #73: pool_quant_test ...........................   Passed   18.14 sec
+      Start 74: pool_topology_test
+74/76 Test #74: pool_topology_test ........................   Passed    0.01 sec
+      Start 75: pool_stress
+75/76 Test #75: pool_stress ...............................   Passed   20.21 sec
+      Start 76: direct_file_async_test
+76/76 Test #76: direct_file_async_test ....................   Passed    0.00 sec
+
+96% tests passed, 3 tests failed out of 76
+
+Total Test time (real) =  81.66 sec
+
+The following tests did not run:
+	 19 - hip_prompt_attn_wmma (Skipped)
+	 20 - hip_prefill_hipblaslt_gemm (Skipped)
+	 60 - qwen35_batch_session_test (Skipped)
+
+The following tests FAILED:
+	 39 - ple_parity (Failed)
+	 71 - expert_parity (Failed)
+	 72 - pool_test (Failed)
+Errors while running CTest
