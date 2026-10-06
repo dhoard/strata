@@ -16,7 +16,10 @@ elif sys.argv[1].endswith('hfmodel.py'):
     def flag(name):
         return a[a.index(name) + 1] if name in a else ''
     model, repo, rel = flag('--model'), flag('--repo'), flag('--release')
-    fam = rel or ('swift' if 'ukisai' in repo else 'coder' if model == 'IQ1_M' else 'qwen')
+    families = {'ukisai/Swift-1.5-Qwen3.8-Flash-Next-GSQ-RCO-GGUF': 'swift',
+                'ISTA-DASLab/Qwen3.8-Flash-Next-GSQ-RCO-GGUF': 'qwen',
+                'ISTA-DASLab/Qwen3.8-Flash-Next-GSQ-RCO-Coder-GGUF': 'coder'}
+    fam = families.get(repo) or rel or ('coder' if model == 'IQ1_M' else 'qwen')
     if '--print' in a and a[a.index('--print') + 1] == 'release':
         print(fam); sys.exit(0)
     if model == 'IQ1_M' and fam != 'coder':      # the coder-only rule, stubbed as hfmodel dies

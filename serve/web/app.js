@@ -252,6 +252,7 @@ function renderMonitor(live, hw, st, eng, h, last, requests, totals, kept) {
     } else {
       detail = `${fmt(live.prompt_tokens)} tokens`;
     }
+    if (live.prompt_note) detail += ` · ${live.prompt_note}`;   // #481: the engine is still moving, and where
   } else if (live.state === "generating") {
     label = live.phase ? live.phase[0].toUpperCase() + live.phase.slice(1) : "Generating";
     delete prog.dataset.tone;

@@ -87,6 +87,11 @@ RATE_MIN_SPAN_S = 0.25      # younger than this there is no rate yet: the mean s
 # server (the engine's main thread waits, untimed, for its next command): the engine is ended and the request fails;
 # the next request starts it again.  The config's "engine_silence_s" sets it (0: wait forever, as before).
 ENGINE_SILENCE_S = 300.0
+# ... unless the engine says where it is: a request that is only SLOW (a prompt chunk read from a disk the machine
+# cannot keep up with: minutes with nothing on stdout until the chunk ends) prints an `HB <chunk> <detail> <where>`
+# line every few seconds, which is output like any other and resets the wait above.  An engine that lost step is
+# idle in its command loop, prints no HB, and is ended exactly as before (engine 0.1.39+; STRATA_HB_S sets the
+# interval, 0 turns it off).
 # ... except while a prompt is read: a PP line comes once per chunk (up to 32768 tokens with --prefill auto, issue
 # #282), and the slowest PCs read ~100 tok/s, so a first chunk can take minutes before the first line.  Until the first
 # PP the wait adds the chunk's tokens at PP_FLOOR_TOK_S; after one, a chunk may take PP_SLACK x the last one's time.
@@ -396,6 +401,10 @@ class StrataEngine:
     Per-request sampling rides the same line as engine-side keys between max_new and the ids
     (`temperature=F top_p=F top_k=N seed=N`, the engine's own spelling).  An absent temperature keeps the
     engine's default, which is greedy; `temperature=0` means the same thing, so it is not forwarded.
+
+    The engine also prints `HB <chunk> <detail> <where>` every few seconds while a request is moving (engine
+    0.1.39+): a prompt chunk read from a slow disk prints nothing else until it ends, and that is what keeps the
+    silence watchdog below from taking a slow request for one whose engine lost step.
     """
     silence_s = ENGINE_SILENCE_S         # #481: main() sets the config's engine_silence_s (survives restart())
     silent_note = None                   # #481: why the server ended a silent engine (death_note says it)
@@ -433,6 +442,7 @@ class StrataEngine:
         self.info = {}                   # INFO key=value facts (engine 0.1.8+): kv, expert slots, ... (Monitor tab)
         self.prefill_tok_s_mean = None
         self.progress = None             # (read, total) prompt tokens while a prompt is read, from PP lines
+        self.progress_note = None        # #481: where the engine says it is, from HB lines (server window)
         self.silent_note = None
         try:                            # a ready-made engine's BUILD.json says its version
             self.info["version"] = json.loads((Path(exe).parent / "BUILD.json").read_text()).get("version")
@@ -745,6 +755,8 @@ class StrataEngine:
                     self.progress = (int(f[1]), int(f[2]))
                     self.prefill_tok_s_mean = float(f[4]) if len(f) >= 5 else None
                 yield None
+            elif line.startswith("HB "):              # #481: the engine is still moving, here (see StrataEngine.build)
+                self.progress_note = heartbeat_note(line)
             elif line.startswith("DONE"):
                 self._parse_done(line)
                 self._last_done = line
@@ -872,6 +884,7 @@ class StrataEngine:
         A consumer that stops early leaves the engine in step: the solo request is STOPped and read to its DONE, an
         admission to its BADM, a slot is BSTOPped and freed at its BDONE."""
         self.progress = None
+        self.progress_note = None
         keys = self.sampling_keys(sampling or {})
         out: list[int] = []
         pending: list[int] = []
@@ -1115,6 +1128,7 @@ class StrataEngine:
             yield from self.generate_batched(ids, max_new, sampling, cancel, embeddings)
             return
         self.progress = None
+        self.progress_note = None
         self.prefill_tok_s_mean = None
         # an image request takes the same sampling keys as text (#75: it used to decode greedily whatever was asked)
         head = f"GENI {int(max_new)}{self.sampling_keys(sampling or {})} {embeddings}" if embeddings else \
@@ -1150,12 +1164,14 @@ class StrataEngine:
                 if line is None:
                     done = True
                     raise EngineDied(f"the engine stopped unexpectedly (exit code {self.exit_code()})")
-                heard = time.monotonic()                  # any line is output: T, PP, RESUME, INFO ...
+                heard = time.monotonic()                  # any line is output: T, PP, HB, RESUME, INFO ...
                 if line.startswith("T "):
                     allow = silence
                     if cancel.is_set():
                         return
                     yield int(line[2:])
+                elif line.startswith("HB "):              # #481: the engine is still moving, here (a line resets the
+                    self.progress_note = heartbeat_note(line)   # wait above; a slow prompt chunk is not "lost step")
                 elif line.startswith("PP "):
                     f = line.split()
                     if len(f) >= 3 and f[1].isdigit() and f[2].isdigit():
@@ -1413,6 +1429,18 @@ def effort_end_args(cfg: dict, exe: str, tok) -> list[str] | None:
     print("[strata] effort_position end: a request's non-default reasoning effort goes right before the answer, so "
           "changing it keeps the cached conversation", flush=True)
     return ["--tail-role-token", str(role[0])]
+
+
+def heartbeat_note(line: str) -> str | None:
+    """#481: an `HB <chunk> <detail> <where>` line as the text the server window shows while a prompt is read - the
+    engine's stage, the layer (a batched read) or the token (a read through the verify windows) it is at, and the
+    chunk it is in - or None for anything else (a malformed line is ignored, never fatal: it is only a heartbeat)."""
+    f = line.strip().split(" ", 3)
+    if len(f) < 4 or not f[1].lstrip("-").isdigit() or not f[2].lstrip("-").isdigit() or not f[3].strip():
+        return None
+    chunk, detail, where = int(f[1]), int(f[2]), f[3].strip()
+    note = f"{where} {detail:,}" if detail >= 0 else where
+    return f"{note} (the chunk from token {chunk:,})" if chunk >= 0 and detail >= 0 else note
 
 
 def engine_silence_s(cfg: dict) -> float:
@@ -2052,6 +2080,8 @@ class Service:
                 "tok_s_window_s": RATE_WINDOW_S if state == "generating" else None}
         if state == "reading" and progress:
             live["prompt_read"], live["prompt_total"] = progress
+        if state == "reading":                          # #481: where the engine last said it was (the web page's
+            live["prompt_note"] = getattr(self.engine, "progress_note", None)   # monitor card shows it)
         par = int(getattr(self.engine, "batch", 0) or 0)
         if par:                                         # #465: the requests running together, slot by slot
             with self.status_lock:
@@ -2235,7 +2265,9 @@ class Service:
         if s.get("first_token") is None:
             pr = getattr(self.engine, "progress", None)   # (position reached, prompt tokens): a reused prefix counts
             done = f"{pr[0]:,} of {pr[1]:,}" if pr and pr[1] else f"{s.get('prompt_tokens', 0):,}"   # as read (#29)
-            print(f"[strata] reading the prompt: {done} tokens, {el:.0f} s so far", flush=True)
+            note = getattr(self.engine, "progress_note", None)   # #481: what the engine last said it was doing
+            print(f"[strata] reading the prompt: {done} tokens, {el:.0f} s so far" + (f" ({note})" if note else ""),
+                  flush=True)
         else:
             rate = s["generated"] / max(1e-6, now - s["first_token"])
             print(f"[strata] {s['phase']}: {s['generated']} of max {s.get('max_tokens')} tokens, {rate:.1f} tok/s, "

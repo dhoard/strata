@@ -1,14 +1,8 @@
-"""Contract for the consolidated ./run.sh launcher (run2.sh/run3.sh removed).
+"""Contracts for the Qwen and Swift container launchers.
 Run: python -m unittest discover -s docker -p 'test_*.py'.
 
-The no-argument default is Swift 1.5 IQ3_XXS (plans/run-default-swift-15-iq3xxs-2026-10.md):
-the docker line is pinned against bench/results/2026-10-05-run-default-swift/
-default-swift-explicit.txt, which is byte-identical to what the live gates ran.  Qwen lines are
-pinned too and must stay byte-for-byte what they were before the release axis: --release qwen
---model IQ3_S equals bench/results/2026-10-04-iq3s-tuning/post-tune-iq3s.txt and
---release qwen --model IQ3_XXS equals the launcher-consolidation pin.  Context stays 131072 and
-the VRAM budget <= 10240 MiB in every arm.  Stubbed docker/python (see _stub_runtime.py) keep
-this GPU- and download-free, like test_runtime_contract.py.
+Pin model identity, tuning, 128K context and the 10 GiB ceiling without relying
+on the deleted bench/results fixtures. GPU discovery and Docker are stubbed.
 """
 from pathlib import Path
 import os
@@ -21,19 +15,34 @@ import unittest
 from _stub_runtime import stub_python
 
 ROOT = Path(__file__).resolve().parents[1]
-FIXTURES = ROOT / 'bench' / 'results' / '2026-10-04-launcher-consolidation'
-TUNED = ROOT / 'bench' / 'results' / '2026-10-04-iq3s-tuning'
 
 
-def pinned_env_pairs(fixture, fixtures=FIXTURES):
-    """The -e KEY=VAL pairs of the docker run line captured in a fixture."""
-    text = (fixtures / fixture).read_text()
-    line = next(l for l in text.splitlines() if 'docker run' in l)
-    toks = line.split()
-    return sorted(toks[i + 1] for i, t in enumerate(toks) if t == '-e' and i + 1 < len(toks))
+def expected_env_pairs(release, model):
+    """Explicit launch contract, including release identity over image defaults."""
+    env = {
+        'HIP_VISIBLE_DEVICES': '0', 'HSA_ENABLE_SDMA': '1',
+        'STRATA_DOWNLOAD_MODEL': '1', 'STRATA_VRAM_BUDGET_MIB': '10240',
+        'STRATA_VRAM_RUNTIME_RESERVE_MIB': '1024', 'STRATA_VRAM_SLACK_MIB': '256',
+        'STRATA_MAX_CONTEXT': '131072', 'STRATA_POOL_WORKERS': '0',
+        'STRATA_PREFILL': '2048', 'STRATA_PORT': '9931', 'STRATA_MODEL': model,
+    }
+    if release == 'swift':
+        env.update(STRATA_HF_REPO='ukisai/Swift-1.5-Qwen3.8-Flash-Next-GSQ-RCO-GGUF',
+                   STRATA_PACK_DIR='/work/packs/swift-iq3_xxs',
+                   STRATA_MODEL_NAME='swift-1.5-iq3_xxs')
+    else:
+        env.update(STRATA_HF_REPO='ISTA-DASLab/Qwen3.8-Flash-Next-GSQ-RCO-GGUF',
+                   STRATA_PACK_DIR=f'/work/packs/{model.lower()}',
+                   STRATA_MODEL_NAME=f'qwen3.8-flash-next-{model.lower()}')
+    if (release, model) in (('qwen', 'IQ3_S'), ('swift', 'IQ3_XXS')):
+        env.update(STRATA_EXPERT_CACHE='auto', STRATA_VRAM_LATER_MIB='700',
+                   STRATA_PREFILL_RING='48')
+    else:
+        env.update(STRATA_EXPERT_CACHE='800', STRATA_VRAM_LATER_MIB='768')
+    return sorted(f'{key}={value}' for key, value in env.items())
 
 
-def launch(*args, env_extra=None):
+def launch(*args, env_extra=None, launcher='run.sh'):
     """Run ./run.sh --dry-run with docker/python (hipinfo/hfmodel) stubbed; returns (rc, out, err)."""
     with tempfile.TemporaryDirectory() as directory:
         root = Path(directory)
@@ -46,7 +55,7 @@ def launch(*args, env_extra=None):
                if not k.startswith('STRATA_') and k != 'HSA_OVERRIDE_GFX_VERSION'}
         env.update(PATH=str(root) + os.pathsep + env['PATH'], PYTHON=str(python), **(env_extra or {}))
         result = subprocess.run(
-            ['bash', str(ROOT / 'run.sh'), '--dry-run', '--image', 'test:guard',
+            ['bash', str(ROOT / launcher), '--dry-run', '--image', 'test:guard',
              '--hf-cache', directory, '--work', directory, *args],
             env=env, capture_output=True, text=True)
         return result.returncode, result.stdout, result.stderr
@@ -59,17 +68,18 @@ def actual_env_pairs(stdout):
 
 
 class LauncherContract(unittest.TestCase):
-    def test_only_run_sh_launcher(self):
-        self.assertEqual(sorted(p.name for p in ROOT.glob('run*.sh')), ['run.sh'])
+    def test_both_launchers_exist(self):
+        self.assertEqual(sorted(p.name for p in ROOT.glob('run*.sh')), ['run-swift.sh', 'run.sh'])
 
     def test_launcher_syntax(self):
-        subprocess.run(['bash', '-n', str(ROOT / 'run.sh')], check=True)
+        for launcher in ('run.sh', 'run-swift.sh'):
+            subprocess.run(['bash', '-n', str(ROOT / launcher)], check=True)
 
-    def test_swift_default_is_the_gated_line(self):
-        rc, out, err = launch()
+    def test_swift_launcher_default(self):
+        rc, out, err = launch(launcher='run-swift.sh')
         self.assertEqual(rc, 0, err)
         self.assertEqual(actual_env_pairs(out),
-                         pinned_env_pairs('default-swift-explicit.txt', SWIFT_DIR))
+                         expected_env_pairs('swift', 'IQ3_XXS'))
         self.assertIn('STRATA_MODEL=IQ3_XXS', out)
         self.assertIn('STRATA_MODEL_NAME=swift-1.5-iq3_xxs', out)
         self.assertIn('STRATA_PACK_DIR=/work/packs/swift-iq3_xxs', out)
@@ -81,12 +91,29 @@ class LauncherContract(unittest.TestCase):
     def test_qwen_iq3_s_pin_survives_under_release_qwen(self):
         rc, out, err = launch('--release', 'qwen', '--model', 'IQ3_S')
         self.assertEqual(rc, 0, err)
-        self.assertEqual(actual_env_pairs(out), pinned_env_pairs('post-tune-iq3s.txt', TUNED))
+        self.assertEqual(actual_env_pairs(out), expected_env_pairs('qwen', 'IQ3_S'))
 
     def test_qwen_iq3xxs_pin_survives_under_release_qwen(self):
         rc, out, err = launch('--release', 'qwen', '--model', 'IQ3_XXS')
         self.assertEqual(rc, 0, err)
-        self.assertEqual(actual_env_pairs(out), pinned_env_pairs('pre-run-iq3xxs.txt'))
+        self.assertEqual(actual_env_pairs(out), expected_env_pairs('qwen', 'IQ3_XXS'))
+
+    def test_swift_launcher_forwards_options_and_release_overrides(self):
+        for args, env_extra, release, model in (
+                (('--model', 'IQ3_XXS', '--release', 'qwen'), None, 'qwen', 'IQ3_XXS'),
+                ((), {'STRATA_RELEASE': 'qwen'}, 'qwen', 'IQ3_S'),
+                (('--model', 'IQ3_S'), {
+                    'STRATA_HF_REPO': 'ISTA-DASLab/Qwen3.8-Flash-Next-GSQ-RCO-GGUF'},
+                 'qwen', 'IQ3_S')):
+            with self.subTest(args=args, env_extra=env_extra):
+                rc, out, err = launch(*args, env_extra=env_extra, launcher='run-swift.sh')
+                self.assertEqual(rc, 0, err)
+                self.assertEqual(actual_env_pairs(out), expected_env_pairs(release, model))
+
+    def test_qwen_launcher_default(self):
+        rc, out, err = launch()
+        self.assertEqual(rc, 0, err)
+        self.assertEqual(actual_env_pairs(out), expected_env_pairs('qwen', 'IQ3_S'))
 
     def test_expert_cache_numeric_overrides_auto_with_warning(self):
         rc, out, err = launch('--release', 'qwen', '--model', 'IQ3_S', '--expert-cache', '900')
@@ -107,19 +134,14 @@ class LauncherContract(unittest.TestCase):
         self.assertIn('IQ3_XXS', re.sub(r'\x1b\[[0-9;]*m', '', err))
 
 
-SWIFT_DIR = ROOT / 'bench' / 'results' / '2026-10-05-run-default-swift'
-
-
 class ReleaseAxis(unittest.TestCase):
-    """plans/run-default-swift-15-iq3xxs-2026-10.md: the --release axis.  The Swift line is
-    pinned byte-for-byte against the captured fixture; Qwen lines must not gain a single -e
-    (their historical byte identity is pinned in LauncherContract above)."""
+    """Release flags and environment overrides work through both launchers."""
 
     def test_release_swift_line_matches_the_gated_launch(self):
         rc, out, err = launch('--release', 'swift', '--model', 'IQ3_XXS')
         self.assertEqual(rc, 0, err)
         self.assertEqual(actual_env_pairs(out),
-                         pinned_env_pairs('default-swift-explicit.txt', SWIFT_DIR))
+                         expected_env_pairs('swift', 'IQ3_XXS'))
 
     def test_release_flag_line_equals_the_manual_env_line(self):
         """What users typed yesterday (explicit -e) and what --release does today must give the
@@ -146,14 +168,14 @@ class ReleaseAxis(unittest.TestCase):
             return env
         self.assertEqual(effective(old), effective(new))
         self.assertEqual(sorted(f'{k}={v}' for k, v in effective(new).items()),
-                         pinned_env_pairs('default-swift-explicit.txt', SWIFT_DIR))
+                         expected_env_pairs('swift', 'IQ3_XXS'))
 
     def test_release_qwen_line_keeps_the_qwen_pin(self):
         rc, qwen, _ = launch('--release', 'qwen', '--model', 'IQ3_S')
         rc2, default, _ = launch()
         self.assertEqual((rc, rc2), (0, 0))
-        self.assertNotEqual(actual_env_pairs(qwen), actual_env_pairs(default))
-        self.assertEqual(actual_env_pairs(qwen), pinned_env_pairs('post-tune-iq3s.txt', TUNED))
+        self.assertEqual(actual_env_pairs(qwen), actual_env_pairs(default))
+        self.assertEqual(actual_env_pairs(qwen), expected_env_pairs('qwen', 'IQ3_S'))
 
     def test_coder_quant_still_resolves_coder(self):
         rc, out, err = launch('--model', 'IQ1_M')      # no release named: the quant names coder

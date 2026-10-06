@@ -2594,6 +2594,39 @@ class SilentEngine(unittest.TestCase):
         self.later(engine, 0.5, "T 5", "DONE 1 1 1 1 length")
         self.assertEqual(list(engine.generate([1], 10, {}, threading.Event())), [5])
 
+    def test_a_slow_but_moving_request_is_not_ended(self):
+        # #481: while a prompt chunk is read the engine prints an HB line every STRATA_HB_S seconds; a request that
+        # is only slow must not be taken for one that lost step (this prompt's first chunk would be allowed 0.7 s).
+        engine = self.bare(0.5)
+        for i in range(5):                                       # 5 HB lines, 0.3 s apart: over the 0.5 s silence
+            self.later(engine, 0.3 * (i + 1), f"HB {i} {i} reading the prompt (batched): layer")
+        self.later(engine, 1.6, "PP 10 10 1600 6.3", "T 7", "DONE 1 10 1600 1 length")
+        self.assertEqual(list(engine.generate([1] * 10, 10, {}, threading.Event())), [None, 7])
+        engine.proc.kill.assert_not_called()
+        self.assertIn("reading the prompt (batched): layer", engine.progress_note)
+
+    def test_heartbeat_note_text(self):
+        from serve.server import heartbeat_note
+        self.assertEqual(heartbeat_note("HB 2048 7 reading the prompt (batched): layer"),
+                         "reading the prompt (batched): layer 7 (the chunk from token 2,048)")
+        self.assertEqual(heartbeat_note("HB -1 1150 reading the prompt (verify windows), from token"),
+                         "reading the prompt (verify windows), from token 1,150")
+        for bad in ("HB nope 1 reading", "HB 1 1", "HB -1 -1", "T 5", "HB 1 2", ""):
+            self.assertIsNone(heartbeat_note(bad))
+
+    def test_the_server_window_says_where_the_engine_is(self):
+        # #481: with no PP line yet (the first prompt chunk is still being read) the window line says where the
+        # engine is, so minutes of a slow read are not minutes of a blank line; /metrics carries the same note.
+        from serve.server import heartbeat_note
+        engine = self.bare(0.5)
+        svc = Service(engine, ByteTokenizer(), ChatTemplate(ROOT / "serve/chat_template.jinja"))
+        engine.progress_note = heartbeat_note("HB 0 31 reading the prompt (batched): layer")
+        out = io.StringIO()
+        with contextlib.redirect_stdout(out):
+            svc._progress(0, st={"started": time.time(), "prompt_tokens": 2620, "first_token": None})
+        self.assertIn("reading the prompt: 2,620 tokens,", out.getvalue())
+        self.assertIn("(reading the prompt (batched): layer 31 (the chunk from token 0))", out.getvalue())
+
     def test_config(self):
         from serve.server import ENGINE_SILENCE_S, engine_silence_s
         self.assertEqual(engine_silence_s({}), ENGINE_SILENCE_S)

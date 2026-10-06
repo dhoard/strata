@@ -41,6 +41,7 @@ td.log
 /mtp/
 /run-*.bat
 /run-*.sh
+!/run-swift.sh
 /strata-*.json
 /strata-*.log
 /build-strata.bat

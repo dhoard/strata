@@ -9,10 +9,16 @@ Two images, both named `strata`:
 
 ```sh
 ./build.sh                  # ~7.4 GB of base image, then a 10-25 minute compile (ccache: ~2 min after)
-./run.sh --detach           # server on http://127.0.0.1:8080
+./run.sh --detach           # Qwen IQ3_S on http://127.0.0.1:9931
+# Or: ./run-swift.sh --detach  # Swift 1.5 IQ3_XXS on the same port
 docker logs -f strata-gfx1101
 ./run.sh --check            # asks /v1/models
 ```
+
+`run.sh` defaults to Qwen IQ3_S. `run-swift.sh` defaults to Swift 1.5 IQ3_XXS and
+uses the same launcher and options. Both pass the selected model repository, pack
+directory and model name explicitly, overriding any release defaults in the image.
+Run one at a time with the default port and GPU budget.
 
 Measured here (RX 7700 XT, gfx1101, ROCm 7.2.1 image), so "documented" and "observed" stay apart:
 
@@ -43,7 +49,7 @@ directory that holds `models--<org>--<repo>/` and `blobs/`, i.e. what `hub/` is 
 HF stores every file as a relative symlink into `blobs/`, so mounting a `snapshots/` subfolder instead
 of the root gives the engine nothing but dangling links.
 
-The quant defaults to **IQ3_XXS**. First start, if it is not cached:
+For example, with `--model IQ3_XXS`, first start runs these steps if it is not cached:
 
 1. `hf download ISTA-DASLab/Qwen3.8-Flash-Next-GSQ-RCO-GGUF --include 'IQ3_XXS/*'` (~76 GB, resumable)
 2. `tools/strata_tokenizer.py` → `<pack>/tokenizer/`
@@ -157,6 +163,7 @@ Pass with `./run.sh -e KEY=VALUE`. Inside the image these already have defaults.
 | `STRATA_EXPERT_CACHE` | `800` | slot budget; native cache uses per-pair sizes within the allocation cap |
 | `STRATA_POOL_WORKERS` | `0` | engine chooses physical cores within CPU affinity, reserving the host core |
 | `STRATA_SPEC` | `4` | `0` without an MTP runtime |
+| `STRATA_ENGINE_SILENCE_S` | `300` (the server's) | seconds the server waits for a line from the engine during a request before it ends it and fails the request; `0` waits forever. The engine prints an `HB` line every 10 s while a request is moving, so this only ends an engine that is truly silent. Raise it if a request dies with "the engine said nothing for ... s" while the prompt is being read from a slow disk |
 | `HF_TOKEN` | - | only for releases that need license acceptance |
 | `HIP_VISIBLE_DEVICES` | `0` | the discrete card; the iGPU (gfx1036) must stay invisible |
 | `HSA_OVERRIDE_GFX_VERSION` | **unset, deliberately** | setting it breaks gfx1101 |
@@ -172,5 +179,11 @@ Pass with `./run.sh -e KEY=VALUE`. Inside the image these already have defaults.
 * Answers are correct but slow: check `docker logs` for
   `expert cache auto: ... -> 0 slots` (inspect the cache reserve and allocations; keep `--max-context 131072`) and for
   missing MTP (`--spec 0`).
+* `the engine said nothing for ... s during the request` (#481): read the last `reading the prompt:` line in the
+  server window (`docker logs -f strata-gfx1101`). `... 350 s so far (reading the prompt (batched): layer 31 ...)`
+  is a prompt read from a disk the machine cannot keep up with - the first request after a start streams the
+  pack's expert misses from wherever the model lives - and not an engine that lost step, so let it finish. The
+  server waits 300 s for a line and the engine prints one every 10 s while a request moves; if your disk needs
+  longer than that, `./run.sh --engine-silence 900` raises the wait (or `0`: never end a request).
 * A test you expected to run was skipped: `ple_parity` needs an external model fixture and is
   excluded **by name** in `./build.sh --tests` - never counted as a pass.

@@ -95,6 +95,13 @@ MAX_TOKENS="${STRATA_MAX_TOKENS:-32768}"
 # The model's template already defaults to xhigh, but a server-side default makes it a declared
 # setting instead of a coincidence, and a client that names none gets the documented level.
 REASONING="${STRATA_REASONING_EFFORT:-high}"
+# #481: seconds the server waits for a line from the engine during a request before it ends it and fails the
+# request.  A prompt chunk read from a slow disk prints nothing until it ends (the engine's own progress lines
+# arrive once per chunk), so a machine whose read is very slow can raise this; 0 waits forever.  Unset keeps the
+# server's own default (300 s), which the engine's `HB` lines already keep alive while a request is moving.
+SILENCE="${STRATA_ENGINE_SILENCE_S:-}"
+[ -z "$SILENCE" ] || [[ "$SILENCE" =~ ^[0-9]+([.][0-9]+)?$ ]] \
+  || die "STRATA_ENGINE_SILENCE_S must be a number of seconds >= 0 (0 = wait forever), not '$SILENCE'"
 PREFILL="${STRATA_PREFILL:-2048}"
 EXPERT_CACHE="${STRATA_EXPERT_CACHE:-800}"
 [[ "$EXPERT_CACHE" = auto || "$EXPERT_CACHE" =~ ^[1-9][0-9]*$ ]] \
@@ -161,7 +168,7 @@ log "  pack=$STRATA_PACK_DIR  mtp=$STRATA_MTP  profile=$EXPERT_PROFILE"
 mkdir -p "$RUN_DIR" "$(dirname "$LOG")" 2>/dev/null || true
 CONFIG="${STRATA_CONFIG:-$RUN_DIR/strata-hip.json}"
 export CONFIG NATIVE PLE PACK="$STRATA_PACK_DIR" MTP="$STRATA_MTP" EXPERT_PROFILE REPO LOG MODEL_NAME \
-       RESERVE_MIB MAX_CONTEXT MAX_TOKENS REASONING PREFILL KV SPEC POOL_WORKERS EXPERT_CACHE
+       RESERVE_MIB MAX_CONTEXT MAX_TOKENS REASONING SILENCE PREFILL KV SPEC POOL_WORKERS EXPERT_CACHE
 "$PY" - <<'PY'
 import json, os
 e = os.environ
@@ -183,6 +190,10 @@ cfg = {"exe": os.environ.get("STRATA_EXE", "/usr/local/bin/strata"), "args": arg
        # heuristic tokenizer will sometimes ask for more than the window has
        "fit_max_tokens": os.environ.get("STRATA_FIT_MAX_TOKENS", "1") == "1",
        "reasoning_effort": e["REASONING"]}
+if e.get("SILENCE"):              # #481: engine_silence_s; 0 = the server waits for the engine forever
+    cfg["engine_silence_s"] = float(e["SILENCE"])
+    print("strata-hip: engine_silence_s=%s s (a request ends when the engine prints nothing for that long)" %
+          e["SILENCE"])
 path = e["CONFIG"]
 open(path, "w").write(json.dumps(cfg, indent=1) + "\n")
 print("strata-hip: wrote %s\n            %s" % (path, " ".join(args)))

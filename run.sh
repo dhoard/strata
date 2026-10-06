@@ -1,26 +1,27 @@
 #!/usr/bin/env bash
 # Run the Strata server container on this machine's AMD GPU.
 #
-#   ./run.sh                      Swift 1.5 (IQ3_XXS), 10 GiB VRAM budget, http://127.0.0.1:9931
-#   ./run.sh --release qwen       Qwen3.8-Flash-Next, default quant there IQ3_S
-#   ./run.sh --model IQ3_XXS      choose a quant of the default (Swift) release - fetch it on first
-#                                 start if your HF cache has no Swift file by that name
+#   ./run.sh                      Qwen3.8-Flash-Next (IQ3_S), 10 GiB VRAM budget, http://127.0.0.1:9931
+#   ./run.sh --release swift      Swift 1.5, default quant there IQ3_XXS
+#   ./run.sh --model IQ3_XXS      choose a quant of the default (Qwen) release - fetch it on first
+#                                 start if your HF cache has no Qwen file by that name
 #   ./run.sh --detach             background;  ./run.sh --check  asks it afterwards whether it is up
 #   ./run.sh --offline            never download: fail with the command to run instead
+#   ./run.sh --engine-silence 900 wait longer for a slow prompt read before the request is ended (default 300 s)
 #   ./run.sh --dry-run            print the docker command and the reasoning, change nothing
 #
-# Releases: swift (default, UkisAI's fine-tune - Swift Open License 1.0, logged at every start),
-# qwen (the original Qwen3.8-Flash-Next), coder (expert-pruned).  Each release keeps its own pack
+# Releases: qwen (default, the original Qwen3.8-Flash-Next), swift (UkisAI's fine-tune -
+# Swift Open License 1.0, logged at every start), coder (expert-pruned). Each release keeps its own pack
 # directory (packs/swift-iq3_xxs beside packs/iq3_xxs) and a pack is refused if it was built from
-# another release's shards.  Before 2026-10-05 the default was qwen IQ3_S; $STRATA_MODEL alone now
-# names a quant of the DEFAULT release, so pin Qwen quants as `--release qwen --model IQ3_S`.
+# another release's shards. $STRATA_MODEL alone names a quant of the default Qwen release;
+# IQ1_M selects Coder. Use --release swift to select Swift explicitly.
 #
 # The tuning below is measured on this machine's card (bench/results/2026-10-04-iq3s-tuning/ and
 # 2026-10-05-run-default-swift/, READMEs have the matrices): the 48-slot prefill ring is the lever
 # - the default 384-slot ring does not fit beside the cache, so the engine halves its prompt
-# chunk - and it keeps the prompt path on 2,048-token chunks.  Default line (Swift IQ3_XXS):
+# chunk - and it keeps the prompt path on 2,048-token chunks. Swift IQ3_XXS measured:
 # fresh prefill 255 tok/s, decode 32.9, TTFT at 4,096 tokens 15.7 s, 130,944-token prompts at
-# 230 tok/s, share peak 8,697 MiB.  Qwen IQ3_S measured the same way: 235 / 30.0 / 16.3 s /
+# 230 tok/s, share peak 8,697 MiB. Default Qwen IQ3_S measured the same way: 235 / 30.0 / 16.3 s /
 # 8,723 MiB.  All under the same 10 GiB ceiling, which is NOT raised (the 12 272 MiB card keeps
 # its ~2 GiB for the desktop and the GUI).  Unmeasured release+quant combinations run the
 # conservative 0.1.39 pins and say so.
@@ -96,6 +97,11 @@ Options:
       --fresh              remove an existing container of the same name first
       --max-context N      KV context (must remain 131072 / 128K)
       --max-tokens N       output cap a request gets when it names none (default 32768)
+      --engine-silence S   end a request when the engine prints nothing for S seconds (the server's default
+                           is 300; 0 = wait forever).  The engine prints an HB line every 10 s while a
+                           request runs, so normally only an engine that is truly silent is ended; raise
+                           this when a request is ended while the window still says it is reading the
+                           prompt (a prompt read from a disk the machine cannot keep up with)
       --reasoning-effort L reasoning level a request gets when it names none: off, minimal, low,
                            medium, high (default high; the request's own value always wins)
       --prefill N          prefill chunk (default: 2048; engine reduces it if borrowing cannot fit)
@@ -127,6 +133,7 @@ while [ $# -gt 0 ]; do
     --fresh)           FRESH=1; shift ;;
     --max-context)     MAX_CONTEXT="${2:?--max-context needs a value}"; shift 2 ;;
     --max-tokens)      EXTRA_ENV+=(-e "STRATA_MAX_TOKENS=${2:?}"); shift 2 ;;
+    --engine-silence)  EXTRA_ENV+=(-e "STRATA_ENGINE_SILENCE_S=${2:?}"); shift 2 ;;
     --reasoning-effort) EXTRA_ENV+=(-e "STRATA_REASONING_EFFORT=${2:?}"); shift 2 ;;
     --prefill)         EXTRA_ENV+=(-e "STRATA_PREFILL=${2:?}"); shift 2 ;;
     --expert-cache)    EXPLICIT_CACHE="${2:?--expert-cache needs a value}"; EXTRA_ENV+=(-e "STRATA_EXPERT_CACHE=$EXPLICIT_CACHE"); shift 2 ;;
@@ -189,17 +196,15 @@ if [ -z "$MODEL" ]; then
     swift) MODEL=IQ3_XXS ;;
     coder) MODEL=IQ1_M ;;
     repo)  die "a release named only by STRATA_HF_REPO has no default quant; pass --model QUANT" ;;
-    *)     MODEL=IQ3_XXS ;;                   # nothing named at all: the shipped default line
+    *)     MODEL=IQ3_S ;;                     # nothing named at all: the default Qwen line
   esac
 fi
 RELEASE_RESOLVED="$(hf_release_query)" || die "the release for '$MODEL' is refused or unknown (hfmodel above)"
 if [ -n "${STRATA_HF_REPO:-}" ]; then
   RELEASE="$RELEASE_RESOLVED"          # a repo is its own authority (empty: a release off the table)
 elif [ -z "$RELEASE" ]; then
-  # The named releases share the quant vocabulary, so an unnamed release defaults to Swift 1.5
-  # (the shipping default per plans/run-default-swift-15-iq3xxs-2026-10.md); only a quant that
-  # exists solely for the expert-pruned Coder (IQ1_M) still resolves a release by itself.
-  if [ "$RELEASE_RESOLVED" = coder ]; then RELEASE=coder; else RELEASE=swift; fi
+  # An unnamed release defaults to Qwen; IQ1_M selects the expert-pruned Coder.
+  if [ "$RELEASE_RESOLVED" = coder ]; then RELEASE=coder; else RELEASE=qwen; fi
 else
   [ -n "$RELEASE_RESOLVED" ] || die "unknown release '$RELEASE'.  Known: qwen, swift, coder
        (STRATA_HF_REPO=<org/name> still works for a release that is not in the table)"
@@ -405,15 +410,11 @@ ARGS=(docker run --rm --name "$NAME$CHECK_ONLY_SUFFIX"
       -e "HIP_VISIBLE_DEVICES=0" -e "HSA_ENABLE_SDMA=1"
       -e "STRATA_DOWNLOAD_MODEL=$([ "$OFFLINE" = 1 ] && echo 0 || echo 1)"
       -v "$HF_CACHE:/hf-cache" -v "$WORK:/work")
-# Release facts become explicit for every release but qwen, whose line stays byte-for-byte the
-# historical launch (the resolver infers qwen from the quant, and the container's pack and model-
-# name defaults already carry qwen shapes).  $STRATA_HF_REPO is forwarded too - it never was
-# before, which only worked when users passed it again via -e.
-if [ "$RELEASE" != qwen ]; then
-  ARGS+=(-e "STRATA_PACK_DIR=/work/packs/${STRATA_PACK_TAG:-}$MODEL_LOWER"
-         -e "STRATA_MODEL_NAME=${STRATA_MODEL_NAME_DEFAULT:-${STRATA_MODEL_NAME:-qwen3.8-flash-next-$MODEL_LOWER}}"
-         -e "STRATA_HF_REPO=${STRATA_HF_REPO:-$STRATA_REPO}")
-fi
+# Pin the resolved release for every launch. Image defaults may name another release
+# (including Swift), so relying on them can disagree with the host's cache check.
+ARGS+=(-e "STRATA_PACK_DIR=/work/packs/${STRATA_PACK_TAG:-}$MODEL_LOWER"
+       -e "STRATA_MODEL_NAME=${STRATA_MODEL_NAME_DEFAULT:-${STRATA_MODEL_NAME:-qwen3.8-flash-next-$MODEL_LOWER}}"
+       -e "STRATA_HF_REPO=${STRATA_HF_REPO:-$STRATA_REPO}")
 [ "$CHECK_ONLY" = 1 ] || ARGS+=(-p "$BIND:$PORT:$PORT")
 [ -n "${HF_TOKEN:-}" ]        && ARGS+=(-e "HF_TOKEN=$HF_TOKEN")
 [ -n "${HF_REVISION:-}" ]     && ARGS+=(-e "HF_REVISION=$HF_REVISION")
@@ -424,7 +425,8 @@ fi
 [ -n "$RING_DEFAULT" ] && ARGS+=(-e "STRATA_PREFILL_RING=$RING_DEFAULT")
 for tuning_key in STRATA_PREFILL_RING STRATA_STAGER_RING STRATA_STAGER_THREADS \
                   STRATA_IO_THREADS STRATA_HIPBLASLT_TUNING STRATA_PREFILL_TIMING \
-                  STRATA_PREFILL_MEMORY_REPORT STRATA_PREFILL_LEND_PCT; do
+                  STRATA_PREFILL_MEMORY_REPORT STRATA_PREFILL_LEND_PCT STRATA_ENGINE_SILENCE_S \
+                  STRATA_HB_S; do
   [ -z "${!tuning_key:-}" ] || ARGS+=(-e "$tuning_key=${!tuning_key}")
 done
 [ "$CHECK_ONLY" = 1 ] && ARGS+=(--entrypoint bash -e "STRATA_AUTO_PREPARE=1")
@@ -434,7 +436,10 @@ if [ "$CHECK_ONLY" = 1 ]; then
 elif [ "$DETACH" = 1 ]; then
   ARGS+=(-d "$IMAGE")
 else
-  ARGS+=(-it "$IMAGE")
+  # Docker refuses -it with redirected stdin. Keep foreground logs usable from
+  # scripts as well as a terminal, and allocate a TTY only for terminal input.
+  if [ -t 0 ]; then ARGS+=(-it); fi
+  ARGS+=("$IMAGE")
 fi
 
 [ -n "${STRATA_LICENSE:-}" ] && log "release: $RELEASE ($STRATA_LICENSE)"
